@@ -34,92 +34,99 @@ This document details the production deployment process for LensVault on a stand
    ```
    *Note: LensVault automatically uses PyMySQL (`pymysql.install_as_MySQLdb()`), avoiding the requirement for compiled C extensions on cPanel.*
 
+## 3. Git-Based Setup & Deployment Workflow
+
+### Step 3.1: Clone via cPanel "Git™ Version Control" (or SSH)
+
+#### Method A: Using cPanel GUI (Git™ Version Control)
+1. In cPanel, navigate to the **Files** section and click **Git™ Version Control**.
+2. Click the blue **Create** button.
+3. Configure the clone parameters:
+   - **Clone URL**: `https://github.com/nihaalxz/google_drive_for_photographers.git`
+     *(Note: If the repository is private, see Section 3.5 below for setting up SSH deploy keys).*
+   - **Repository Path**: `lensvault` (this will clone the code to `/home/cpaneluser/lensvault`).
+   - **Repository Name**: `lensvault`.
+4. Click **Create**.
+
+#### Method B: Using cPanel Terminal / SSH
+Alternatively, open cPanel **Terminal** or connect via SSH:
+```bash
+cd ~
+git clone https://github.com/nihaalxz/google_drive_for_photographers.git lensvault
+```
+
 ---
 
-## 3. Backend Deployment (Django + Passenger WSGI)
+## 4. Backend Configuration (Django + Passenger WSGI)
 
-### Step 3.1: Upload Backend Files
-1. In cPanel **File Manager** (or via SFTP/Git), create the directory `/home/cpaneluser/lensvault_backend/`.
-2. Upload the `backend/` files to this directory (excluding `venv/`, `__pycache__/`, and `.git/`).
-
-### Step 3.2: Configure Python App in cPanel
+### Step 4.1: Configure Python App in cPanel
 1. Open cPanel **Setup Python App**.
 2. Click **Create Application**.
 3. Configure the fields:
    - **Python version**: `3.11` or `3.12`
-   - **Application root**: `lensvault_backend`
+   - **Application root**: `lensvault/backend`
    - **Application URL**: `api.yourdomain.com` (or `yourdomain.com/api`)
    - **Application startup file**: `passenger_wsgi.py`
    - **Application Entry point**: `application`
 4. Click **Create**.
 
-### Step 3.3: Install Dependencies & Run Migrations
-1. In the Python App dashboard, copy the virtualenv activation command shown at the top, for example:
-   ```bash
-   source /home/cpaneluser/virtualenv/lensvault_backend/3.12/bin/activate && cd /home/cpaneluser/lensvault_backend
-   ```
-2. Log in via SSH or open the cPanel **Terminal**:
-   ```bash
-   source /home/cpaneluser/virtualenv/lensvault_backend/3.12/bin/activate
-   cd /home/cpaneluser/lensvault_backend
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
-3. Create the production `.env` file in `/home/cpaneluser/lensvault_backend/.env`:
-   ```env
-   DEBUG=False
-   SECRET_KEY=generate-a-random-50-character-secret-key-here
-   ALLOWED_HOSTS=yourdomain.com,api.yourdomain.com
+### Step 4.2: Production Environment (.env)
+In cPanel **File Manager** or Terminal, create `/home/cpaneluser/lensvault/backend/.env`:
+```env
+DEBUG=False
+SECRET_KEY=generate-a-strong-random-50-character-secret-key-here
+ALLOWED_HOSTS=yourdomain.com,api.yourdomain.com
 
-   DATABASE_URL=mysql://cpaneluser_lvuser:YourPassword@localhost:3306/cpaneluser_lensvault
+DATABASE_URL=mysql://cpaneluser_lvuser:YourPassword@localhost:3306/cpaneluser_lensvault
 
-   CORS_ALLOWED_ORIGINS=https://yourdomain.com
-   CSRF_TRUSTED_ORIGINS=https://yourdomain.com,https://api.yourdomain.com
+CORS_ALLOWED_ORIGINS=https://yourdomain.com
+CSRF_TRUSTED_ORIGINS=https://yourdomain.com,https://api.yourdomain.com
 
-   B2_S3_ENDPOINT=https://s3.us-east-005.backblazeb2.com
-   B2_REGION=us-east-005
-   B2_BUCKET_NAME=your-private-b2-bucket
-   B2_KEY_ID=your_backblaze_key_id
-   B2_APPLICATION_KEY=your_backblaze_application_key
-   B2_LOCAL_FALLBACK=False
-   ```
-4. Run migrations and collect static files:
-   ```bash
-   python manage.py migrate
-   python manage.py collectstatic --noinput
-   ```
-5. Seed initial admin user if desired:
-   ```bash
-   python manage.py createsuperuser
-   ```
-
-### Step 3.4: Restart Python App
-In cPanel **Setup Python App**, click **Restart** to load the new code and environment.
+B2_S3_ENDPOINT=https://s3.us-east-005.backblazeb2.com
+B2_REGION=us-east-005
+B2_BUCKET_NAME=your-private-b2-bucket
+B2_KEY_ID=your_backblaze_key_id
+B2_APPLICATION_KEY=your_backblaze_application_key
+B2_LOCAL_FALLBACK=False
+```
 
 ---
 
-## 4. Frontend Deployment (SvelteKit)
+## 5. Automated Deployment with `deploy.sh`
 
-### Option A: Server-Rendered (Node.js via cPanel Setup Node.js App)
-1. In `frontend/package.json`, ensure `@sveltejs/adapter-node` is used.
-2. Build locally or in cPanel:
-   ```bash
-   npm run build
-   ```
-3. Upload `build/`, `package.json`, and `package-lock.json` to `/home/cpaneluser/lensvault_frontend/`.
-4. In cPanel **Setup Node.js App**:
-   - Application root: `lensvault_frontend`
-   - Application startup file: `build/index.js`
-   - Application URL: `yourdomain.com`
-5. Click **Run NPM Install** and then **Restart**.
+LensVault includes a one-step deployment script `deploy.sh` that automates git pulling, backend dependencies, database migrations, static asset collection, frontend building, syncing to `public_html/`, and Phusion Passenger WSGI reloading.
 
-### Option B: Single Page Application (Static `public_html`)
-1. In `frontend/`, run:
-   ```bash
-   npm run build
-   ```
-2. Copy the contents of the generated client bundle into your domain's `public_html/`.
-3. Add this `.htaccess` file in `public_html/` to support client-side routing and reverse-proxy `/api/`:
+### Running a Deployment:
+From the cPanel **Terminal** or SSH:
+```bash
+cd ~/lensvault
+bash deploy.sh
+```
+
+### Auto-Deploy via cPanel Git Version Control & Webhooks:
+1. In cPanel **Git™ Version Control**, click **Manage** on the `lensvault` repository.
+2. Select the **Deploy** tab. The repository includes `.cpanel.yml` which automatically invokes `deploy.sh`.
+3. To trigger deployment automatically on every `git push origin main`:
+   - Copy the **Webhook URL** provided in cPanel Git Version Control.
+   - Go to your GitHub repository: **Settings** > **Webhooks** > **Add webhook**.
+   - Paste the Payload URL, set Content type to `application/json`, and select **Just the push event**.
+   - Every time you push to GitHub, cPanel automatically pulls and runs `deploy.sh`!
+
+### 5.3: Setting Up SSH Deploy Keys (For Private Repositories)
+If your GitHub repository is private:
+1. In cPanel, open **SSH Access** > **Manage SSH Keys** > **Generate a New Key**.
+2. Name it `id_rsa_lensvault` and leave the passphrase empty.
+3. Click **View/Edit** on the Public Key and copy the key string.
+4. Go to your GitHub repository > **Settings** > **Deploy keys** > **Add deploy key**.
+5. Paste the key and check **Allow write access** (optional, read-only is sufficient).
+6. In cPanel **Git™ Version Control**, use the SSH clone URL:
+   `git@github.com:nihaalxz/google_drive_for_photographers.git`
+
+---
+
+## 6. Frontend Routing (`public_html/.htaccess`)
+
+The frontend build is output directly into `public_html/`. The included `frontend/static/.htaccess` handles SPA client-side routing and forces HTTPS:
 
 ```apache
 <IfModule mod_rewrite.c>
@@ -130,19 +137,19 @@ In cPanel **Setup Python App**, click **Restart** to load the new code and envir
   RewriteCond %{HTTPS} off
   RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-  # Proxy /api/ to Passenger WSGI backend if separate port/subdomain
-  # RewriteRule ^api/(.*)$ https://api.yourdomain.com/api/$1 [P,L]
+  # Don't rewrite actual files or directories
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
 
-  # SvelteKit Single Page Application Routing Fallback
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
+  # SvelteKit SPA fallback to index.html
   RewriteRule ^ index.html [L]
 </IfModule>
 ```
 
 ---
 
-## 5. Automated Maintenance Cron Jobs
+## 7. Automated Maintenance Cron Jobs
 
 In cPanel **Cron Jobs**, set up the following automated tasks:
 

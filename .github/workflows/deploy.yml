@@ -1,0 +1,58 @@
+name: LensVault CI & cPanel Auto-Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  validate-and-build:
+    name: Test & Build Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build Frontend
+        working-directory: frontend
+        run: npm run build
+
+  # Optional SSH deployment step:
+  # To enable zero-touch auto-deployment on git push:
+  # Add CPANEL_HOST, CPANEL_USER, CPANEL_SSH_KEY to your GitHub Repo Secrets
+  deploy:
+    name: Trigger cPanel Deployment
+    needs: validate-and-build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Execute Remote Deployment via SSH
+        if: env.CPANEL_HOST != ''
+        env:
+          CPANEL_HOST: ${{ secrets.CPANEL_HOST }}
+          CPANEL_USER: ${{ secrets.CPANEL_USER }}
+          CPANEL_PORT: ${{ secrets.CPANEL_PORT || 22 }}
+          CPANEL_SSH_KEY: ${{ secrets.CPANEL_SSH_KEY }}
+        run: |
+          if [ -n "$CPANEL_HOST" ] && [ -n "$CPANEL_SSH_KEY" ]; then
+            mkdir -p ~/.ssh
+            echo "$CPANEL_SSH_KEY" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh -o StrictHostKeyChecking=no -p "$CPANEL_PORT" "$CPANEL_USER@$CPANEL_HOST" "cd ~/lensvault && bash deploy.sh"
+          else
+            echo "SSH secrets not configured. If using cPanel Git Webhook or manual deploy.sh, this step is skipped."
+          fi
