@@ -12,5 +12,22 @@ sys.path.insert(0, cwd)
 # Set environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
-from django.core.wsgi import get_wsgi_application
-application = get_wsgi_application()
+try:
+    from django.core.wsgi import get_wsgi_application
+    application = get_wsgi_application()
+except Exception as exc:
+    import traceback
+    error_traceback = traceback.format_exc()
+    def application(environ, start_response):
+        start_response('500 Internal Server Error', [('Content-Type', 'text/plain; charset=utf-8')])
+        output = (
+            "==================================================\n"
+            " LensVault Backend Startup Exception\n"
+            "==================================================\n\n"
+            f"{error_traceback}\n\n"
+            "Troubleshooting Tips:\n"
+            "1. Run 'pip install -r requirements.txt' in the cPanel virtual environment.\n"
+            "2. Ensure '/home/texastravels/lensvault/backend/.env' exists with valid credentials.\n"
+            "3. Run 'python manage.py migrate' to initialize database tables.\n"
+        )
+        return [output.encode('utf-8')]
