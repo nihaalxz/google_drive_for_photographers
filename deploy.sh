@@ -149,10 +149,13 @@ if [ -d "$FRONTEND_DIR/build" ]; then
 
   if [ "$REAL_DEST" = "$REAL_SRC" ]; then
     echo "Document root is already frontend/build. Prebuilt assets are live!"
+    chmod 755 "$PROJECT_ROOT" "$FRONTEND_DIR" "$FRONTEND_DIR/build" 2>/dev/null || true
   else
     mkdir -p "$PUBLIC_HTML"
     cp -r "$FRONTEND_DIR/build/." "$PUBLIC_HTML/"
     echo "Frontend successfully synced to $PUBLIC_HTML"
+    find "$PUBLIC_HTML" -type d -exec chmod 755 {} + 2>/dev/null || true
+    find "$PUBLIC_HTML" -type f -exec chmod 644 {} + 2>/dev/null || true
   fi
 else
   echo "WARNING: $FRONTEND_DIR/build directory not found."
