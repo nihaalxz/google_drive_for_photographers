@@ -12,8 +12,8 @@ venv/
 # Node.js & SvelteKit
 node_modules/
 .svelte-kit/
-build/
 dist/
+!frontend/build/**
 .env.local
 .env.*.local
 npm-debug.log*

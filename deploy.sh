@@ -22,14 +22,21 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="$PROJECT_ROOT/backend"
 FRONTEND_DIR="$PROJECT_ROOT/frontend"
 
+# Allow command-line argument to specify target document root: bash deploy.sh /path/to/docroot
+if [ -n "$1" ]; then
+  PUBLIC_HTML="$1"
+fi
+
 # Auto-detect public web root for lensvault.texasholidayssa.com or fallback
 if [ -z "$PUBLIC_HTML" ]; then
   if [ -d "$HOME/lensvault.texasholidayssa.com" ]; then
     PUBLIC_HTML="$HOME/lensvault.texasholidayssa.com"
   elif [ -d "$HOME/public_html/lensvault.texasholidayssa.com" ]; then
     PUBLIC_HTML="$HOME/public_html/lensvault.texasholidayssa.com"
-  elif [ -d "$HOME/lensvault.hevora.io" ]; then
-    PUBLIC_HTML="$HOME/lensvault.hevora.io"
+  elif [ -d "$HOME/public_html/lensvault" ]; then
+    PUBLIC_HTML="$HOME/public_html/lensvault"
+  elif [ -d "$HOME/lensvault_frontend" ]; then
+    PUBLIC_HTML="$HOME/lensvault_frontend"
   else
     PUBLIC_HTML="$HOME/public_html"
   fi
