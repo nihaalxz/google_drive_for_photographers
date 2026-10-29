@@ -144,12 +144,16 @@ echo ""
 echo "--> [5/6] Syncing frontend build to $PUBLIC_HTML..."
 
 if [ -d "$FRONTEND_DIR/build" ]; then
-  mkdir -p "$PUBLIC_HTML"
-  
-  # Copy built files (including .htaccess and _app) to public_html
-  cp -r "$FRONTEND_DIR/build/." "$PUBLIC_HTML/"
-  
-  echo "Frontend successfully synced to $PUBLIC_HTML"
+  REAL_DEST="$(realpath "$PUBLIC_HTML" 2>/dev/null || echo "$PUBLIC_HTML")"
+  REAL_SRC="$(realpath "$FRONTEND_DIR/build" 2>/dev/null || echo "$FRONTEND_DIR/build")"
+
+  if [ "$REAL_DEST" = "$REAL_SRC" ]; then
+    echo "Document root is already frontend/build. Prebuilt assets are live!"
+  else
+    mkdir -p "$PUBLIC_HTML"
+    cp -r "$FRONTEND_DIR/build/." "$PUBLIC_HTML/"
+    echo "Frontend successfully synced to $PUBLIC_HTML"
+  fi
 else
   echo "WARNING: $FRONTEND_DIR/build directory not found."
   echo "Make sure frontend was built before deploying."
