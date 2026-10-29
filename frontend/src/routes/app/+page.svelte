@@ -69,7 +69,13 @@
   let fileInputRef = $state<HTMLInputElement>();
 
   async function loadData() {
-    if (!auth.activeWorkspace) return;
+    if (!auth.initialized) {
+      await auth.init();
+    }
+    if (!auth.activeWorkspace) {
+      loading = false;
+      return;
+    }
     loading = true;
     try {
       const [foldersRes, filesRes] = await Promise.all([
@@ -103,13 +109,17 @@
     }
   }
 
-  onMount(() => {
-    loadData();
+  onMount(async () => {
+    await loadData();
   });
 
   $effect(() => {
-    if (auth.activeWorkspace) {
-      // Re-load when folder or sort changes
+    const wsId = auth.activeWorkspace?.id;
+    const folderId = currentFolderId;
+    const q = searchQuery;
+    const sort = sortBy;
+    const dir = sortDirection;
+    if (wsId) {
       loadData();
     }
   });

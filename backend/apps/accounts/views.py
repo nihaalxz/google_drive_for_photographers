@@ -71,6 +71,23 @@ class RegisterView(APIView):
         }, status=status.HTTP_201_CREATED)
 
 
+def ensure_user_workspace(user):
+    membership = WorkspaceMembership.objects.filter(user=user).select_related('workspace').first()
+    if not membership:
+        ws_name = f"{user.full_name or user.username}'s Vault"
+        unique_slug = f"{slugify(ws_name)}-{uuid.uuid4().hex[:6]}"
+        workspace = Workspace.objects.create(
+            name=ws_name,
+            slug=unique_slug,
+            storage_limit_bytes=getattr(settings, 'DEFAULT_WORKSPACE_QUOTA_BYTES', 10737418240)
+        )
+        membership = WorkspaceMembership.objects.create(
+            workspace=workspace,
+            user=user,
+            role=WorkspaceRole.OWNER
+        )
+    return membership.workspace
+
 class LoginView(APIView):
     authentication_classes = []
     permission_classes = [permissions.AllowAny]
@@ -99,13 +116,11 @@ class LoginView(APIView):
 
         login(request, user)
 
-        # Get first workspace
-        membership = WorkspaceMembership.objects.filter(user=user).select_related('workspace').first()
-        workspace = membership.workspace if membership else None
+        workspace = ensure_user_workspace(user)
 
         return Response({
             'user': UserSerializer(user).data,
-            'active_workspace': WorkspaceSerializer(workspace).data if workspace else None
+            'active_workspace': WorkspaceSerializer(workspace).data
         })
 
 
@@ -122,6 +137,7 @@ class MeView(APIView):
 
     def get(self, request):
         user = request.user
+        ensure_user_workspace(user)
         memberships = WorkspaceMembership.objects.filter(user=user).select_related('workspace')
         workspaces = [m.workspace for m in memberships]
         active_ws = workspaces[0] if workspaces else None
