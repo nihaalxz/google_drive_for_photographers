@@ -71,23 +71,24 @@ git clone https://github.com/nihaalxz/google_drive_for_photographers.git lensvau
 4. Click **Create**.
 
 ### Step 4.2: Production Environment (.env)
-In cPanel **File Manager** or Terminal, create `/home/cpaneluser/lensvault/backend/.env`:
+In cPanel **File Manager** or Terminal, create `/home/texastravels/lensvault/backend/.env`:
 ```env
 DEBUG=False
-SECRET_KEY=generate-a-strong-random-50-character-secret-key-here
-ALLOWED_HOSTS=yourdomain.com,api.yourdomain.com
+SECRET_KEY=tBqEQDfyJ-EWKqc4hkMOildUIThcT1qJKQZ0yP1bv1EX2oqHQVUjsBYsPqWvjmA6sd0
+ALLOWED_HOSTS=lensvault.hevora.io,api.lensvault.hevora.io,localhost,127.0.0.1
 
-DATABASE_URL=mysql://cpaneluser_lvuser:YourPassword@localhost:3306/cpaneluser_lensvault
+DATABASE_URL=mysql://texastravels_lensvault:texastravels_lensvault@localhost:3306/texastravels_lensvault
 
-CORS_ALLOWED_ORIGINS=https://yourdomain.com
-CSRF_TRUSTED_ORIGINS=https://yourdomain.com,https://api.yourdomain.com
+CORS_ALLOWED_ORIGINS=https://lensvault.hevora.io,https://api.lensvault.hevora.io
+CSRF_TRUSTED_ORIGINS=https://lensvault.hevora.io,https://api.lensvault.hevora.io
 
-B2_S3_ENDPOINT=https://s3.us-east-005.backblazeb2.com
-B2_REGION=us-east-005
-B2_BUCKET_NAME=your-private-b2-bucket
-B2_KEY_ID=your_backblaze_key_id
-B2_APPLICATION_KEY=your_backblaze_application_key
+B2_S3_ENDPOINT=https://s3.eu-central-003.backblazeb2.com
+B2_REGION=eu-central-003
+B2_BUCKET_NAME=hevoracloudstorage
+B2_KEY_ID=003e8b9198420200000000001
+B2_APPLICATION_KEY=K003yCglgGKINtIW9sTGpF11cWhExFY
 B2_LOCAL_FALLBACK=False
+DEFAULT_WORKSPACE_QUOTA_BYTES=10737418240
 ```
 
 ---

@@ -19,14 +19,24 @@
 set -e # Exit immediately if a command exits with a non-zero status
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PUBLIC_HTML="${PUBLIC_HTML:-$HOME/public_html}"
 BACKEND_DIR="$PROJECT_ROOT/backend"
 FRONTEND_DIR="$PROJECT_ROOT/frontend"
+
+# Auto-detect public web root for lensvault.hevora.io or primary public_html
+if [ -z "$PUBLIC_HTML" ]; then
+  if [ -d "$HOME/lensvault.hevora.io" ]; then
+    PUBLIC_HTML="$HOME/lensvault.hevora.io"
+  elif [ -d "$HOME/public_html/lensvault.hevora.io" ]; then
+    PUBLIC_HTML="$HOME/public_html/lensvault.hevora.io"
+  else
+    PUBLIC_HTML="$HOME/public_html"
+  fi
+fi
 
 echo "=================================================="
 echo " Starting LensVault Deployment"
 echo " Project Root: $PROJECT_ROOT"
-echo " Target public_html: $PUBLIC_HTML"
+echo " Target Document Root: $PUBLIC_HTML"
 echo "=================================================="
 
 # ------------------------------------------------------------------------------
