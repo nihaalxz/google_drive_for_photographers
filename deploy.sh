@@ -144,19 +144,30 @@ echo ""
 echo "--> [5/6] Syncing frontend build to $PUBLIC_HTML..."
 
 if [ -d "$FRONTEND_DIR/build" ]; then
-  REAL_DEST="$(realpath "$PUBLIC_HTML" 2>/dev/null || echo "$PUBLIC_HTML")"
-  REAL_SRC="$(realpath "$FRONTEND_DIR/build" 2>/dev/null || echo "$FRONTEND_DIR/build")"
+  # Ensure LiteSpeed and web server can traverse project directories
+  chmod 755 "$PROJECT_ROOT" "$FRONTEND_DIR" "$FRONTEND_DIR/build" 2>/dev/null || true
 
-  if [ "$REAL_DEST" = "$REAL_SRC" ]; then
-    echo "Document root is already frontend/build. Prebuilt assets are live!"
-    chmod 755 "$PROJECT_ROOT" "$FRONTEND_DIR" "$FRONTEND_DIR/build" 2>/dev/null || true
-  else
-    mkdir -p "$PUBLIC_HTML"
-    cp -r "$FRONTEND_DIR/build/." "$PUBLIC_HTML/"
-    echo "Frontend successfully synced to $PUBLIC_HTML"
-    find "$PUBLIC_HTML" -type d -exec chmod 755 {} + 2>/dev/null || true
-    find "$PUBLIC_HTML" -type f -exec chmod 644 {} + 2>/dev/null || true
-  fi
+  # Also copy to frontend root in case cPanel document root is set to lensvault/frontend
+  cp -r "$FRONTEND_DIR/build/." "$FRONTEND_DIR/" 2>/dev/null || true
+
+  # Candidate roots to sync to
+  CANDIDATE_TARGETS=(
+    "$PUBLIC_HTML"
+    "$HOME/public_html/lensvault"
+    "$HOME/public_html/lensvault.texasholidayssa.com"
+    "$HOME/lensvault.texasholidayssa.com"
+  )
+
+  for target in "${CANDIDATE_TARGETS[@]}"; do
+    if [ -n "$target" ] && [ -d "$target" ] && [ "$target" != "$FRONTEND_DIR/build" ] && [ "$target" != "$FRONTEND_DIR" ]; then
+      echo "Syncing frontend assets to $target..."
+      cp -r "$FRONTEND_DIR/build/." "$target/" 2>/dev/null || true
+      find "$target" -maxdepth 2 -type d -exec chmod 755 {} + 2>/dev/null || true
+      find "$target" -maxdepth 2 -type f -exec chmod 644 {} + 2>/dev/null || true
+    fi
+  done
+  
+  echo "Frontend assets deployed with full LiteSpeed permissions."
 else
   echo "WARNING: $FRONTEND_DIR/build directory not found."
   echo "Make sure frontend was built before deploying."
