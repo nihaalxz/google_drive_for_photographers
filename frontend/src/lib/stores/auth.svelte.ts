@@ -42,6 +42,7 @@ class AuthStore {
         this.activeWorkspace = null;
         this.loading = false;
         this.initialized = true;
+        api.auth.csrf().catch(() => {});
         return null;
       } finally {
         this.initPromise = null;

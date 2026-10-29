@@ -11,9 +11,21 @@ from apps.workspaces.models import Workspace, WorkspaceMembership, WorkspaceRole
 from apps.workspaces.serializers import WorkspaceSerializer
 from apps.activity.models import ActivityLog
 
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.utils.decorators import method_decorator
+
 User = get_user_model()
 
+class CsrfTokenView(APIView):
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
+
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request):
+        return Response({'detail': 'CSRF cookie established'})
+
 class RegisterView(APIView):
+    authentication_classes = []
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
@@ -60,6 +72,7 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
+    authentication_classes = []
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):

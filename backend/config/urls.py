@@ -42,7 +42,22 @@ def serve_spa(request, resource=''):
         'message': 'Frontend static build not found. Run npm run build in frontend directory.'
     })
 
+def api_root(request):
+    return JsonResponse({
+        'service': 'LensVault Cloud Storage API',
+        'version': '1.0.0',
+        'status': 'online',
+        'frontend_url': 'https://lensvault.texasholidayssa.com',
+        'endpoints': {
+            'health': '/api/v1/health/',
+            'admin': '/admin/',
+            'auth': '/api/v1/auth/',
+            'storage': '/api/v1/storage/'
+        }
+    })
+
 urlpatterns = [
+    path('', api_root, name='api-root'),
     path('admin/', admin.site.urls),
     path('api/v1/health/', health_check, name='health-check'),
     path('api/v1/auth/', include('apps.accounts.urls')),
@@ -53,7 +68,7 @@ urlpatterns = [
     path('api/v1/albums/', include('apps.albums.urls')),
     path('api/v1/sharing/', include('apps.sharing.urls')),
     path('api/v1/activity/', include('apps.activity.urls')),
-    # Fallback to SPA client router
+    # Optional Fallback to SPA client router
     re_path(r'^(?P<resource>.*)$', serve_spa, name='spa-fallback'),
 ]
 

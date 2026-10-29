@@ -65,7 +65,7 @@ git clone https://github.com/nihaalxz/google_drive_for_photographers.git lensvau
 3. Configure the fields:
    - **Python version**: `3.11` or `3.12`
    - **Application root**: `lensvault/backend`
-   - **Application URL**: `api.yourdomain.com` (or `yourdomain.com/api`)
+   - **Application URL**: `lensvaultapi.texasholidayssa.com`
    - **Application startup file**: `passenger_wsgi.py`
    - **Application Entry point**: `application`
 4. Click **Create**.
@@ -75,12 +75,19 @@ In cPanel **File Manager** or Terminal, create `/home/texastravels/lensvault/bac
 ```env
 DEBUG=False
 SECRET_KEY=tBqEQDfyJ-EWKqc4hkMOildUIThcT1qJKQZ0yP1bv1EX2oqHQVUjsBYsPqWvjmA6sd0
-ALLOWED_HOSTS=lensvault.hevora.io,api.lensvault.hevora.io,localhost,127.0.0.1
+ALLOWED_HOSTS=lensvaultapi.texasholidayssa.com,lensvault.texasholidayssa.com,localhost,127.0.0.1
 
 DATABASE_URL=mysql://texastravels_lensvault:texastravels_lensvault@localhost:3306/texastravels_lensvault
 
-CORS_ALLOWED_ORIGINS=https://lensvault.hevora.io,https://api.lensvault.hevora.io
-CSRF_TRUSTED_ORIGINS=https://lensvault.hevora.io,https://api.lensvault.hevora.io
+CORS_ALLOWED_ORIGINS=https://lensvault.texasholidayssa.com
+CSRF_TRUSTED_ORIGINS=https://lensvault.texasholidayssa.com,https://lensvaultapi.texasholidayssa.com
+
+SESSION_COOKIE_DOMAIN=.texasholidayssa.com
+CSRF_COOKIE_DOMAIN=.texasholidayssa.com
+SESSION_COOKIE_SAMESITE=Lax
+CSRF_COOKIE_SAMESITE=Lax
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
 
 B2_S3_ENDPOINT=https://s3.eu-central-003.backblazeb2.com
 B2_REGION=eu-central-003

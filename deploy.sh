@@ -22,12 +22,14 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="$PROJECT_ROOT/backend"
 FRONTEND_DIR="$PROJECT_ROOT/frontend"
 
-# Auto-detect public web root for lensvault.hevora.io or primary public_html
+# Auto-detect public web root for lensvault.texasholidayssa.com or fallback
 if [ -z "$PUBLIC_HTML" ]; then
-  if [ -d "$HOME/lensvault.hevora.io" ]; then
+  if [ -d "$HOME/lensvault.texasholidayssa.com" ]; then
+    PUBLIC_HTML="$HOME/lensvault.texasholidayssa.com"
+  elif [ -d "$HOME/public_html/lensvault.texasholidayssa.com" ]; then
+    PUBLIC_HTML="$HOME/public_html/lensvault.texasholidayssa.com"
+  elif [ -d "$HOME/lensvault.hevora.io" ]; then
     PUBLIC_HTML="$HOME/lensvault.hevora.io"
-  elif [ -d "$HOME/public_html/lensvault.hevora.io" ]; then
-    PUBLIC_HTML="$HOME/public_html/lensvault.hevora.io"
   else
     PUBLIC_HTML="$HOME/public_html"
   fi

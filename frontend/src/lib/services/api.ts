@@ -26,8 +26,14 @@ export class ApiError extends Error {
   }
 }
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL !== undefined)
+  ? import.meta.env.VITE_API_BASE_URL
+  : (typeof window !== 'undefined' && window.location.hostname.includes('texasholidayssa.com')
+    ? 'https://lensvaultapi.texasholidayssa.com'
+    : '');
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = endpoint.startsWith('http') ? endpoint : endpoint;
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
   const headers = new Headers(options.headers || {});
 
   if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
@@ -79,6 +85,8 @@ export interface PaginatedResponse<T> {
 
 export const api = {
   auth: {
+    csrf: () => request<{ detail: string }>('/api/v1/auth/csrf/'),
+
     login: (credentials: { email: string; password: string }) =>
       request<{ user: User; active_workspace: Workspace }>('/api/v1/auth/login/', {
         method: 'POST',
