@@ -75,6 +75,7 @@ export interface FileAsset {
   is_starred: boolean;
   is_deleted: boolean;
   deleted_at: string | null;
+  thumbnail_url: string | null;
   preview_url: string | null;
   download_url: string | null;
   is_image: boolean;

@@ -10,13 +10,18 @@ from rest_framework import status, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+import base64
+import logging
 from .models import UploadSession, UploadSessionStatus
 from .services.b2 import b2_service
 from apps.workspaces.models import Workspace
 from apps.folders.models import Folder
 from apps.files.models import FileAsset, UploadStatus
 from apps.files.serializers import FileAssetSerializer
+from apps.files.utils import generate_compressed_thumbnail
 from apps.activity.models import ActivityLog
+
+logger = logging.getLogger(__name__)
 
 class CreateUploadSessionView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -153,12 +158,41 @@ class CompleteUploadSessionView(APIView):
         # Extract optional client-provided EXIF/camera metadata
         exif_data = request.data.get('metadata', {})
 
+        # Process thumbnail: check client base64 thumbnail first, then server fallback
+        thumbnail_base64 = request.data.get('thumbnail_base64')
+        thumb_key = ''
+        if thumbnail_base64 and isinstance(thumbnail_base64, str):
+            try:
+                if ',' in thumbnail_base64:
+                    _, b64data = thumbnail_base64.split(',', 1)
+                else:
+                    b64data = thumbnail_base64
+                thumb_bytes = base64.b64decode(b64data)
+                if thumb_bytes and len(thumb_bytes) < 3 * 1024 * 1024:
+                    thumb_key = f"thumbnails/{session.workspace.id}/{uuid.uuid4().hex}.webp"
+                    b2_service.upload_bytes(thumb_key, thumb_bytes, content_type='image/webp')
+            except Exception as e:
+                logger.warning(f"Could not save client uploaded thumbnail: {e}")
+
+        # Server-side fallback for images under 15MB if client thumbnail was not supplied
+        if not thumb_key and session.mime_type.startswith('image/') and actual_size < 15 * 1024 * 1024:
+            try:
+                raw_bytes = b2_service.get_object_bytes(session.object_key)
+                if raw_bytes:
+                    thumb_bytes = generate_compressed_thumbnail(raw_bytes)
+                    if thumb_bytes:
+                        thumb_key = f"thumbnails/{session.workspace.id}/{uuid.uuid4().hex}.webp"
+                        b2_service.upload_bytes(thumb_key, thumb_bytes, content_type='image/webp')
+            except Exception as e:
+                logger.warning(f"Could not auto-generate thumbnail on completeSession: {e}")
+
         file_asset = FileAsset.objects.create(
             workspace=session.workspace,
             folder=session.folder,
             original_filename=session.original_filename,
             safe_display_name=session.safe_display_name,
             object_key=session.object_key,
+            thumbnail_key=thumb_key,
             mime_type=session.mime_type,
             file_size=actual_size,
             file_extension=ext,

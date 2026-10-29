@@ -112,6 +112,9 @@ if [ "$VENV_ACTIVATED" = true ]; then
     echo "Running database migrations..."
     python manage.py migrate --noinput
     
+    echo "Generating compressed thumbnails for newly uploaded or un-cached images..."
+    python manage.py generate_thumbnails || true
+
     echo "Collecting backend static files..."
     python manage.py collectstatic --noinput || true
   else

@@ -155,6 +155,47 @@ class B2StorageService:
         # Default mock fallback for simulated uploads
         return {'exists': True, 'size': 1024, 'etag': 'mock-local-etag', 'content_type': 'image/jpeg'}
 
+    def upload_bytes(self, object_key: str, data: bytes, content_type: str = 'image/webp') -> bool:
+        """
+        Directly upload in-memory bytes (e.g. compressed WebP thumbnails) to Backblaze B2
+        with immutable long-lived HTTP caching headers.
+        """
+        if self.has_credentials:
+            client = self._get_client()
+            client.put_object(
+                Bucket=self.bucket_name,
+                Key=object_key,
+                Body=data,
+                ContentType=content_type,
+                CacheControl='public, max-age=31536000, immutable'
+            )
+            return True
+        else:
+            mock_path = os.path.join(settings.MEDIA_ROOT, 'mock_storage', object_key)
+            os.makedirs(os.path.dirname(mock_path), exist_ok=True)
+            with open(mock_path, 'wb') as f:
+                f.write(data)
+            return True
+
+    def get_object_bytes(self, object_key: str) -> bytes:
+        """
+        Retrieve object raw bytes from Backblaze B2 or local mock storage.
+        """
+        if self.has_credentials:
+            client = self._get_client()
+            try:
+                response = client.get_object(Bucket=self.bucket_name, Key=object_key)
+                return response['Body'].read()
+            except Exception as e:
+                logger.error(f"Error reading object bytes for {object_key}: {e}")
+                return b''
+        else:
+            mock_path = os.path.join(settings.MEDIA_ROOT, 'mock_storage', object_key)
+            if os.path.exists(mock_path):
+                with open(mock_path, 'rb') as f:
+                    return f.read()
+            return b''
+
     def delete_object(self, object_key: str):
         """
         Delete object from storage bucket.
@@ -171,3 +212,4 @@ class B2StorageService:
                     pass
 
 b2_service = B2StorageService()
+

@@ -1,13 +1,18 @@
+import logging
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
 from django.db.models import Q
+from django.http import HttpResponse, HttpResponseRedirect
 from .models import FileAsset, UploadStatus
 from .serializers import FileAssetSerializer
+from .utils import generate_compressed_thumbnail
 from apps.folders.models import Folder
 from apps.storage.services.b2 import b2_service
 from apps.activity.models import ActivityLog
+
+logger = logging.getLogger(__name__)
 
 class FileAssetViewSet(viewsets.ModelViewSet):
     serializer_class = FileAssetSerializer
@@ -138,6 +143,8 @@ class FileAssetViewSet(viewsets.ModelViewSet):
         # Delete from Backblaze B2 object storage
         try:
             b2_service.delete_object(object_key)
+            if file_asset.thumbnail_key:
+                b2_service.delete_object(file_asset.thumbnail_key)
         except Exception as e:
             pass
 
@@ -156,6 +163,44 @@ class FileAssetViewSet(viewsets.ModelViewSet):
 
         file_asset.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
+    def thumbnail(self, request, pk=None):
+        """
+        Fast compressed thumbnail endpoint.
+        Returns WebP image directly or redirects to presigned B2 URL.
+        Auto-generates and caches WebP in B2 if thumbnail_key was not yet computed.
+        """
+        try:
+            file_asset = FileAsset.objects.get(id=pk, is_deleted=False)
+        except (FileAsset.DoesNotExist, ValueError):
+            return Response({'detail': 'File not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # 1. If pre-generated thumbnail_key exists in B2, redirect directly to presigned URL
+        if file_asset.thumbnail_key:
+            url = b2_service.generate_presigned_get(file_asset.thumbnail_key, expires_in=7200)
+            return HttpResponseRedirect(url)
+
+        # 2. If it's an image, generate compressed WebP thumbnail on the fly
+        if file_asset.is_image:
+            try:
+                raw_bytes = b2_service.get_object_bytes(file_asset.object_key)
+                if raw_bytes:
+                    thumb_bytes = generate_compressed_thumbnail(raw_bytes)
+                    if thumb_bytes:
+                        thumb_key = f"thumbnails/{file_asset.workspace.id}/{file_asset.id}.webp"
+                        b2_service.upload_bytes(thumb_key, thumb_bytes, content_type='image/webp')
+                        file_asset.thumbnail_key = thumb_key
+                        file_asset.save(update_fields=['thumbnail_key'])
+                        response = HttpResponse(thumb_bytes, content_type='image/webp')
+                        response['Cache-Control'] = 'public, max-age=604800, immutable'
+                        return response
+            except Exception as e:
+                logger.error(f"Error generating on-the-fly thumbnail for {file_asset.id}: {e}")
+
+        # 3. Fallback: redirect to preview_url
+        preview_url = b2_service.generate_presigned_get(file_asset.object_key, expires_in=7200)
+        return HttpResponseRedirect(preview_url)
 
     @action(detail=False, methods=['post'])
     def bulk_action(self, request):
@@ -183,6 +228,8 @@ class FileAssetViewSet(viewsets.ModelViewSet):
             for f in user_files:
                 try:
                     b2_service.delete_object(f.object_key)
+                    if f.thumbnail_key:
+                        b2_service.delete_object(f.thumbnail_key)
                 except Exception:
                     pass
                 ws = f.workspace

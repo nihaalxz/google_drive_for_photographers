@@ -66,13 +66,29 @@
 >
   <!-- Thumbnail Container -->
   <div class="relative aspect-[4/3] w-full bg-muted/60 overflow-hidden flex items-center justify-center">
-    {#if file.is_image && file.preview_url}
+    {#if file.is_image && (file.thumbnail_url || file.preview_url)}
       <img
-        src={file.preview_url}
+        src={file.thumbnail_url || file.preview_url}
         alt={file.safe_display_name}
         loading="lazy"
+        decoding="async"
         class="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
       />
+    {:else if file.is_video && file.thumbnail_url}
+      <div class="relative w-full h-full">
+        <img
+          src={file.thumbnail_url}
+          alt={file.safe_display_name}
+          loading="lazy"
+          decoding="async"
+          class="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+        />
+        <div class="absolute inset-0 flex items-center justify-center bg-black/20">
+          <div class="p-1.5 rounded-full bg-black/60 text-white backdrop-blur-sm">
+            <Film size={18} />
+          </div>
+        </div>
+      </div>
     {:else if file.is_video && file.preview_url}
       <VideoThumbnail
         src={file.preview_url}

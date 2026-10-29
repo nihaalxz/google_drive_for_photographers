@@ -60,13 +60,147 @@ function createUploadManager() {
     });
   }
 
+async function createClientThumbnail(file: File): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+
+  if (file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
+    return new Promise((resolve) => {
+      try {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          const maxDim = 480;
+          let width = img.naturalWidth || img.width;
+          let height = img.naturalHeight || img.height;
+          if (!width || !height) {
+            resolve(null);
+            return;
+          }
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(null);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          let dataUrl = canvas.toDataURL('image/webp', 0.82);
+          if (!dataUrl.startsWith('data:image/webp')) {
+            dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+          }
+          resolve(dataUrl);
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          resolve(null);
+        };
+        img.src = url;
+      } catch {
+        resolve(null);
+      }
+    });
+  }
+
+  if (file.type.startsWith('video/')) {
+    return new Promise((resolve) => {
+      try {
+        const video = document.createElement('video');
+        const url = URL.createObjectURL(file);
+        video.src = url;
+        video.muted = true;
+        video.playsInline = true;
+        video.preload = 'metadata';
+        let resolved = false;
+
+        const timeout = setTimeout(() => {
+          if (!resolved) {
+            resolved = true;
+            URL.revokeObjectURL(url);
+            resolve(null);
+          }
+        }, 3000);
+
+        video.onloadeddata = () => {
+          try {
+            video.currentTime = Math.min(0.5, (video.duration || 1) / 4);
+          } catch {
+            // ignore
+          }
+        };
+
+        video.onseeked = () => {
+          if (resolved) return;
+          resolved = true;
+          clearTimeout(timeout);
+          try {
+            const maxDim = 480;
+            let width = video.videoWidth || 640;
+            let height = video.videoHeight || 360;
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(video, 0, 0, width, height);
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+              URL.revokeObjectURL(url);
+              resolve(dataUrl);
+              return;
+            }
+          } catch {
+            // ignore
+          }
+          URL.revokeObjectURL(url);
+          resolve(null);
+        };
+
+        video.onerror = () => {
+          if (!resolved) {
+            resolved = true;
+            clearTimeout(timeout);
+            URL.revokeObjectURL(url);
+            resolve(null);
+          }
+        };
+      } catch {
+        resolve(null);
+      }
+    });
+  }
+
+  return null;
+}
+
   async function startUpload(
     item: UploadQueueItem,
     workspaceId: string,
     onFileUploaded?: (asset: FileAsset) => void
   ) {
     try {
-      // 1. Request upload session from Django
+      // 1. Kick off client-side compressed thumbnail generation in parallel with network upload
+      const thumbnailPromise = createClientThumbnail(item.file);
+
+      // 2. Request upload session from Django
       const session = await api.storage.createSession({
         workspace_id: workspaceId,
         original_filename: item.file.name,
@@ -75,7 +209,7 @@ function createUploadManager() {
         folder_id: item.folderId
       });
 
-      // 2. Direct browser upload to Backblaze B2 via S3 Presigned URL
+      // 3. Direct browser upload to Backblaze B2 via S3 Presigned URL
       const xhr = new XMLHttpRequest();
       item.xhr = xhr;
 
@@ -117,14 +251,16 @@ function createUploadManager() {
         }
         xhr.send(item.file);
       }).then(async (etag) => {
-        // 3. Complete session with Django & update MySQL ledger
+        // 4. Complete session with Django, including high-speed compressed thumbnail & metadata
+        const thumbnailBase64 = await thumbnailPromise;
         const asset = await api.storage.completeSession({
           session_id: session.session_id,
           etag,
           metadata: {
             width: null,
             height: null
-          }
+          },
+          thumbnail_base64: thumbnailBase64 || undefined
         });
 
         let hasRemainingActive = false;

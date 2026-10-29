@@ -126,9 +126,13 @@
           <!-- Name & Icon / Mini Thumbnail -->
           <td class="px-3 py-2.5">
             <div class="flex items-center gap-2.5 min-w-0">
-              {#if file.is_image && file.preview_url}
+              {#if file.is_image && (file.thumbnail_url || file.preview_url)}
                 <div class="w-7 h-7 rounded border border-border/80 bg-muted/40 overflow-hidden shrink-0">
-                  <img src={file.preview_url} alt="" class="w-full h-full object-cover" loading="lazy" />
+                  <img src={file.thumbnail_url || file.preview_url} alt="" class="w-full h-full object-cover" loading="lazy" decoding="async" />
+                </div>
+              {:else if file.is_video && file.thumbnail_url}
+                <div class="w-7 h-7 rounded border border-border/80 bg-muted/40 overflow-hidden shrink-0">
+                  <img src={file.thumbnail_url} alt="" class="w-full h-full object-cover" loading="lazy" decoding="async" />
                 </div>
               {:else if file.is_video && file.preview_url}
                 <div class="w-7 h-7 rounded border border-border/80 bg-muted/40 overflow-hidden shrink-0">

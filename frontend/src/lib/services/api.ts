@@ -265,6 +265,7 @@ export const api = {
       etag?: string;
       parts?: Array<{ PartNumber: number; ETag: string }>;
       metadata?: Record<string, unknown>;
+      thumbnail_base64?: string;
     }) =>
       request<FileAsset>('/api/v1/storage/upload-complete/', {
         method: 'POST',
@@ -381,3 +382,14 @@ export const api = {
       request<PaginatedResponse<ActivityLog>>(`/api/v1/activity/?workspace_id=${workspace_id}`)
   }
 };
+
+export function getAssetThumbnailUrl(file: FileAsset | null | undefined): string | null {
+  if (!file) return null;
+  const raw = file.thumbnail_url || file.preview_url;
+  if (!raw) return null;
+  if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('data:')) {
+    return raw;
+  }
+  return `${API_BASE_URL}${raw}`;
+}
+

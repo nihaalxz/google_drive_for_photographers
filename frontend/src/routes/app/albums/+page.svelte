@@ -143,10 +143,12 @@
         <div class="rounded border border-border bg-card overflow-hidden text-xs flex flex-col group hover:border-border/90 transition-all">
           <!-- Cover Image -->
           <div class="aspect-[16/10] bg-muted/60 relative overflow-hidden flex items-center justify-center">
-            {#if album.cover_asset && album.cover_asset.preview_url}
+            {#if album.cover_asset && (album.cover_asset.thumbnail_url || album.cover_asset.preview_url)}
               <img
-                src={album.cover_asset.preview_url}
+                src={album.cover_asset.thumbnail_url || album.cover_asset.preview_url}
                 alt={album.title}
+                loading="lazy"
+                decoding="async"
                 class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
             {:else}

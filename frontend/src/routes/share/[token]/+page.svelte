@@ -244,11 +244,20 @@
                 onkeydown={(e) => { if (e.key === 'Enter') previewFileId = file.id; }}
                 class="group relative rounded border border-border bg-card overflow-hidden cursor-pointer select-none aspect-[4/3]"
               >
-                {#if file.is_image && file.preview_url}
+                {#if file.is_image && (file.thumbnail_url || file.preview_url)}
                   <img
-                    src={file.preview_url}
+                    src={file.thumbnail_url || file.preview_url}
                     alt={file.safe_display_name}
                     loading="lazy"
+                    decoding="async"
+                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                {:else if file.is_video && file.thumbnail_url}
+                  <img
+                    src={file.thumbnail_url}
+                    alt={file.safe_display_name}
+                    loading="lazy"
+                    decoding="async"
                     class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 {:else if file.is_video && file.preview_url}
