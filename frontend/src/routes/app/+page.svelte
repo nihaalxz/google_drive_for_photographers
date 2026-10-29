@@ -109,8 +109,21 @@
     }
   }
 
-  onMount(async () => {
-    await loadData();
+  onMount(() => {
+    loadData();
+
+    function handleAutoRefresh() {
+      loadData();
+      auth.refreshWorkspace();
+    }
+
+    window.addEventListener('lensvault:file-uploaded', handleAutoRefresh);
+    window.addEventListener('lensvault:uploads-completed', handleAutoRefresh);
+
+    return () => {
+      window.removeEventListener('lensvault:file-uploaded', handleAutoRefresh);
+      window.removeEventListener('lensvault:uploads-completed', handleAutoRefresh);
+    };
   });
 
   $effect(() => {

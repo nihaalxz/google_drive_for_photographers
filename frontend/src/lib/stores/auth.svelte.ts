@@ -74,6 +74,18 @@ class AuthStore {
     }
   }
 
+  async refresh() {
+    try {
+      const res = await api.auth.me();
+      this.user = res.user;
+      this.workspaces = res.workspaces;
+      this.activeWorkspace = res.active_workspace || (res.workspaces.length > 0 ? res.workspaces[0] : null);
+      return res;
+    } catch {
+      return null;
+    }
+  }
+
   async logout() {
     try {
       await api.auth.logout();

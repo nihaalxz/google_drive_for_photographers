@@ -7,13 +7,15 @@ export interface UploadManagerState {
   isOpen: boolean;
   activeCount: number;
   totalProgress: number;
+  lastCompletedAt: number | null;
 }
 
 const initialState: UploadManagerState = {
   items: [],
   isOpen: false,
   activeCount: 0,
-  totalProgress: 0
+  totalProgress: 0,
+  lastCompletedAt: null
 };
 
 function createUploadManager() {
@@ -125,18 +127,30 @@ function createUploadManager() {
           }
         });
 
+        let hasRemainingActive = false;
         update(state => {
           const current = state.items.find(i => i.id === item.id);
           if (current) {
             current.status = 'COMPLETED';
             current.progress = 100;
           }
+          const active = state.items.filter(i => i.status === 'UPLOADING').length;
+          const queued = state.items.filter(i => i.status === 'QUEUED').length;
+          hasRemainingActive = active > 0 || queued > 0;
           return {
             ...state,
             totalProgress: calculateProgress(state.items),
-            activeCount: state.items.filter(i => i.status === 'UPLOADING').length
+            activeCount: active,
+            lastCompletedAt: Date.now()
           };
         });
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('lensvault:file-uploaded', { detail: { asset } }));
+          if (!hasRemainingActive) {
+            window.dispatchEvent(new CustomEvent('lensvault:uploads-completed', { detail: { asset } }));
+          }
+        }
 
         if (onFileUploaded) {
           onFileUploaded(asset);

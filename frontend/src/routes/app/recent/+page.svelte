@@ -17,7 +17,13 @@
   let previewFileId = $state<string | null>(null);
 
   async function loadRecent() {
-    if (!auth.activeWorkspace) return;
+    if (!auth.initialized) {
+      await auth.init();
+    }
+    if (!auth.activeWorkspace) {
+      loading = false;
+      return;
+    }
     loading = true;
     try {
       const res = await api.files.list({
@@ -35,6 +41,19 @@
 
   onMount(() => {
     loadRecent();
+
+    function handleAutoRefresh() {
+      loadRecent();
+      auth.refreshWorkspace();
+    }
+
+    window.addEventListener('lensvault:file-uploaded', handleAutoRefresh);
+    window.addEventListener('lensvault:uploads-completed', handleAutoRefresh);
+
+    return () => {
+      window.removeEventListener('lensvault:file-uploaded', handleAutoRefresh);
+      window.removeEventListener('lensvault:uploads-completed', handleAutoRefresh);
+    };
   });
 </script>
 

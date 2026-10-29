@@ -44,7 +44,13 @@
   );
 
   async function loadStorageMetrics() {
-    if (!auth.activeWorkspace) return;
+    if (!auth.initialized) {
+      await auth.init();
+    }
+    if (!auth.activeWorkspace) {
+      loading = false;
+      return;
+    }
     loading = true;
     try {
       const data = await api.workspaces.storageBreakdown(auth.activeWorkspace.id);
@@ -58,6 +64,19 @@
 
   onMount(() => {
     loadStorageMetrics();
+
+    function handleAutoRefresh() {
+      loadStorageMetrics();
+      auth.refreshWorkspace();
+    }
+
+    window.addEventListener('lensvault:file-uploaded', handleAutoRefresh);
+    window.addEventListener('lensvault:uploads-completed', handleAutoRefresh);
+
+    return () => {
+      window.removeEventListener('lensvault:file-uploaded', handleAutoRefresh);
+      window.removeEventListener('lensvault:uploads-completed', handleAutoRefresh);
+    };
   });
 
   function formatBytes(bytes: number): string {
