@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Star, Download, Trash2, X } from 'lucide-svelte';
+  import { Star, Download, Trash2, X, Images } from 'lucide-svelte';
 
   interface Props {
     selectedCount: number;
@@ -7,9 +7,10 @@
     onStar: () => void;
     onTrash: () => void;
     onDownload: () => void;
+    onAddToAlbum?: () => void;
   }
 
-  let { selectedCount, onClear, onStar, onTrash, onDownload }: Props = $props();
+  let { selectedCount, onClear, onStar, onTrash, onDownload, onAddToAlbum }: Props = $props();
 </script>
 
 {#if selectedCount > 0}
@@ -17,6 +18,17 @@
     <span class="font-medium text-foreground px-1.5 sm:px-2 border-r border-border shrink-0">
       {selectedCount} <span class="hidden xs:inline">selected</span>
     </span>
+
+    {#if onAddToAlbum}
+      <button
+        onclick={onAddToAlbum}
+        class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded hover:bg-muted text-foreground transition-colors shrink-0"
+        title="Add selected items to an album"
+      >
+        <Images size={14} />
+        <span class="hidden xs:inline">Album</span>
+      </button>
+    {/if}
 
     <button
       onclick={onStar}

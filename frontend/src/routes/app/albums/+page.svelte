@@ -5,6 +5,7 @@
   import { toast } from '$lib/stores/toast';
   import TopToolbar from '$lib/components/layout/TopToolbar.svelte';
   import ShareModal from '$lib/components/gallery/ShareModal.svelte';
+  import AddPhotosToAlbumModal from '$lib/components/gallery/AddPhotosToAlbumModal.svelte';
   import {
     Images,
     Plus,
@@ -13,13 +14,15 @@
     User,
     Camera,
     X,
-    ExternalLink
+    ExternalLink,
+    ArrowRight
   } from 'lucide-svelte';
   import type { Album } from '$lib/types';
 
   let albums = $state<Album[]>([]);
   let loading = $state(true);
   let isCreateOpen = $state(false);
+  let selectedAlbumForAdd = $state<Album | null>(null);
 
   // New Album Form
   let title = $state('');
@@ -140,59 +143,74 @@
   {:else}
     <div class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
       {#each albums as album (album.id)}
-        <div class="rounded border border-border bg-card overflow-hidden text-xs flex flex-col group hover:border-border/90 transition-all">
-          <!-- Cover Image -->
-          <div class="aspect-[16/10] bg-muted/60 relative overflow-hidden flex items-center justify-center">
-            {#if album.cover_asset && (album.cover_asset.thumbnail_url || album.cover_asset.preview_url)}
-              <img
-                src={album.cover_asset.thumbnail_url || album.cover_asset.preview_url}
-                alt={album.title}
-                loading="lazy"
-                decoding="async"
-                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-            {:else}
-              <div class="flex flex-col items-center justify-center text-muted-foreground gap-1.5">
-                <Camera size={28} />
-                <span class="text-[10px] uppercase font-mono">No Cover Photo</span>
+        <div class="rounded border border-border bg-card overflow-hidden text-xs flex flex-col group hover:border-foreground/40 transition-all shadow-xs">
+          <!-- Clickable Cover & Info to Open Album Detail -->
+          <a href={`/app/albums/${album.id}`} class="flex-1 flex flex-col">
+            <!-- Cover Image -->
+            <div class="aspect-[16/10] bg-muted/60 relative overflow-hidden flex items-center justify-center">
+              {#if album.cover_asset && (album.cover_asset.thumbnail_url || album.cover_asset.preview_url)}
+                <img
+                  src={album.cover_asset.thumbnail_url || album.cover_asset.preview_url}
+                  alt={album.title}
+                  loading="lazy"
+                  decoding="async"
+                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              {:else}
+                <div class="flex flex-col items-center justify-center text-muted-foreground gap-1.5">
+                  <Camera size={28} />
+                  <span class="text-[10px] uppercase font-mono">No Cover Photo</span>
+                </div>
+              {/if}
+
+              <span class="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/75 text-white font-mono text-[10px]">
+                {album.photo_count} photos
+              </span>
+            </div>
+
+            <!-- Album Info -->
+            <div class="p-3.5 flex-1 flex flex-col justify-between gap-2.5">
+              <div>
+                <h3 class="font-semibold text-foreground text-sm truncate group-hover:text-primary transition-colors" title={album.title}>
+                  {album.title}
+                </h3>
+                {#if album.client_name}
+                  <div class="flex items-center gap-1.5 text-muted-foreground mt-1">
+                    <User size={12} />
+                    <span class="truncate">{album.client_name}</span>
+                  </div>
+                {/if}
+                {#if album.event_date}
+                  <div class="flex items-center gap-1.5 text-muted-foreground text-[11px] mt-0.5">
+                    <Calendar size={12} />
+                    <span>{album.event_date}</span>
+                  </div>
+                {/if}
               </div>
-            {/if}
-
-            <span class="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/75 text-white font-mono text-[10px]">
-              {album.photo_count} photos
-            </span>
-          </div>
-
-          <!-- Album Info -->
-          <div class="p-3.5 flex-1 flex flex-col justify-between gap-3">
-            <div>
-              <h3 class="font-semibold text-foreground text-sm truncate" title={album.title}>
-                {album.title}
-              </h3>
-              {#if album.client_name}
-                <div class="flex items-center gap-1.5 text-muted-foreground mt-1">
-                  <User size={12} />
-                  <span class="truncate">{album.client_name}</span>
-                </div>
-              {/if}
-              {#if album.event_date}
-                <div class="flex items-center gap-1.5 text-muted-foreground text-[11px] mt-0.5">
-                  <Calendar size={12} />
-                  <span>{album.event_date}</span>
-                </div>
-              {/if}
             </div>
+          </a>
 
-            <!-- Actions Footer -->
-            <div class="pt-2 border-t border-border flex items-center justify-between">
-              <button
-                onclick={() => openShare(album)}
-                class="inline-flex items-center gap-1 text-primary hover:underline font-medium"
-              >
-                <Share2 size={13} />
-                <span>Share Gallery</span>
-              </button>
-            </div>
+          <!-- Actions Footer -->
+          <div class="p-2.5 px-3.5 border-t border-border flex items-center justify-between gap-1 bg-muted/10">
+            <button
+              type="button"
+              onclick={() => selectedAlbumForAdd = album}
+              class="inline-flex items-center gap-1 text-primary hover:underline font-medium text-xs"
+              title="Add photos to this album"
+            >
+              <Plus size={13} />
+              <span>Add Photos</span>
+            </button>
+
+            <button
+              type="button"
+              onclick={() => openShare(album)}
+              class="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground font-medium text-xs transition-colors"
+              title="Share Gallery Link"
+            >
+              <Share2 size={13} />
+              <span>Share</span>
+            </button>
           </div>
         </div>
       {/each}
@@ -301,3 +319,13 @@
     onClose={() => shareModalState = { ...shareModalState, isOpen: false }}
   />
 {/if}
+
+{#if selectedAlbumForAdd}
+  <AddPhotosToAlbumModal
+    isOpen={true}
+    album={selectedAlbumForAdd}
+    onClose={() => selectedAlbumForAdd = null}
+    onSuccess={() => loadAlbums()}
+  />
+{/if}
+

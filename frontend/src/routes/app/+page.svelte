@@ -13,6 +13,7 @@
   import CreateFolderDialog from '$lib/components/drive/CreateFolderDialog.svelte';
   import ImageViewerModal from '$lib/components/viewer/ImageViewerModal.svelte';
   import ShareModal from '$lib/components/gallery/ShareModal.svelte';
+  import AssignToAlbumModal from '$lib/components/gallery/AssignToAlbumModal.svelte';
   import {
     Folder as FolderIcon,
     HardDrive,
@@ -53,6 +54,7 @@
 
   // Modals
   let isCreateFolderOpen = $state(false);
+  let isAssignToAlbumOpen = $state(false);
   let previewFileId = $state<string | null>(null);
   let shareModalState = $state<{
     isOpen: boolean;
@@ -468,10 +470,20 @@
 <BulkActionToolbar
   selectedCount={selectedFileIds.size}
   onClear={() => selectedFileIds = new Set()}
+  onAddToAlbum={() => isAssignToAlbumOpen = true}
   onStar={handleBulkStar}
   onTrash={handleBulkTrash}
   onDownload={handleBulkDownload}
 />
+
+{#if isAssignToAlbumOpen && selectedFileIds.size > 0}
+  <AssignToAlbumModal
+    isOpen={isAssignToAlbumOpen}
+    fileIds={Array.from(selectedFileIds)}
+    onClose={() => isAssignToAlbumOpen = false}
+    onSuccess={() => { selectedFileIds = new Set(); }}
+  />
+{/if}
 
 <!-- Dialogs & Lightbox Modals -->
 <CreateFolderDialog
