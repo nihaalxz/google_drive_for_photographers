@@ -12,13 +12,16 @@
     Lock,
     Trash2,
     Eye,
-    Download
+    Download,
+    QrCode
   } from 'lucide-svelte';
   import type { ShareLink } from '$lib/types';
+  import PrintableQrModal from '$lib/components/gallery/PrintableQrModal.svelte';
 
   let links = $state<ShareLink[]>([]);
   let loading = $state(true);
   let copiedId = $state<string | null>(null);
+  let selectedLinkForQr = $state<ShareLink | null>(null);
 
   async function loadLinks() {
     if (!auth.activeWorkspace) return;
@@ -142,6 +145,14 @@
               <td class="px-4 py-3 text-right">
                 <div class="inline-flex items-center gap-1">
                   <button
+                    onclick={() => selectedLinkForQr = link}
+                    class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    title="Generate Printable QR Code Card"
+                    aria-label="Generate Printable QR Code Card"
+                  >
+                    <QrCode size={14} />
+                  </button>
+                  <button
                     onclick={() => handleCopy(link)}
                     class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                     title="Copy Share URL"
@@ -171,3 +182,15 @@
     </div>
   {/if}
 </div>
+
+{#if selectedLinkForQr}
+  <PrintableQrModal
+    isOpen={!!selectedLinkForQr}
+    url={getShareUrl(selectedLinkForQr.token)}
+    initialTitle={selectedLinkForQr.title || 'Client Gallery'}
+    initialSubtitle="Scan with your phone to view and download full-resolution photographs."
+    studioName={auth.activeWorkspace?.name || 'LensVault Photography'}
+    hasPassword={selectedLinkForQr.is_password_protected}
+    onClose={() => selectedLinkForQr = null}
+  />
+{/if}

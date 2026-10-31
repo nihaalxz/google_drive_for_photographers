@@ -11,9 +11,11 @@
     Calendar,
     Download,
     Heart,
-    ExternalLink
+    ExternalLink,
+    QrCode
   } from 'lucide-svelte';
   import type { ShareLink } from '../../types';
+  import PrintableQrModal from './PrintableQrModal.svelte';
 
   interface Props {
     isOpen: boolean;
@@ -33,12 +35,38 @@
   let isSubmitting = $state(false);
   let createdLink = $state<ShareLink | null>(null);
   let copied = $state(false);
+  let isQrOpen = $state(false);
+  let existingLink = $state<ShareLink | null>(null);
+  let selectedQrLink = $state<ShareLink | null>(null);
+  let checkingExisting = $state(false);
+
+  async function checkExistingLink() {
+    if (!auth.activeWorkspace) return;
+    checkingExisting = true;
+    try {
+      const res = await api.sharing.list(auth.activeWorkspace.id);
+      const matches = (res.results || []).filter(link => {
+        if (targetType === 'ALBUM' && link.album === targetId) return true;
+        if (targetType === 'FOLDER' && link.folder === targetId) return true;
+        if (targetType === 'FILE' && link.file_asset === targetId) return true;
+        return false;
+      });
+      existingLink = matches.length > 0 ? matches[0] : null;
+    } catch {
+      existingLink = null;
+    } finally {
+      checkingExisting = false;
+    }
+  }
 
   $effect(() => {
     if (isOpen) {
       title = targetTitle || 'Shared Collection';
       createdLink = null;
       copied = false;
+      isQrOpen = false;
+      selectedQrLink = null;
+      checkExistingLink();
     }
   });
 
@@ -127,8 +155,8 @@
       </div>
 
       {#if createdLink}
-        <!-- Success State: Display Link and 1-Click Copy -->
-        <div class="space-y-4 py-2">
+        <!-- Success State: Display Link, 1-Click Copy, and Printable QR Card -->
+        <div class="space-y-3.5 py-1">
           <div class="p-3 rounded bg-muted/40 border border-border space-y-2">
             <span class="text-muted-foreground font-medium block">Public Shareable URL:</span>
             <div class="flex items-center gap-2">
@@ -153,7 +181,28 @@
             </div>
           </div>
 
-          <div class="flex items-center justify-between text-muted-foreground text-[11px]">
+          <!-- Printable QR Code Action Card -->
+          <div class="p-3.5 rounded-lg border border-primary/30 bg-primary/5 flex items-center justify-between gap-3">
+            <div class="space-y-0.5 min-w-0">
+              <div class="flex items-center gap-1.5 font-semibold text-foreground text-xs">
+                <QrCode size={15} class="text-primary shrink-0" />
+                <span>Printable QR Code Card</span>
+              </div>
+              <p class="text-[11px] text-muted-foreground leading-normal">
+                Print or download high-res QR card with customizable instructions underneath for event tables & photo frames.
+              </p>
+            </div>
+            <button
+              type="button"
+              onclick={() => { selectedQrLink = createdLink; isQrOpen = true; }}
+              class="shrink-0 flex items-center gap-1.5 h-8 px-3 rounded bg-primary text-primary-foreground hover:bg-primary/90 font-medium transition-colors shadow-xs text-xs"
+            >
+              <QrCode size={13} />
+              <span>Customize & Print</span>
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between text-muted-foreground text-[11px] pt-1">
             <span>Access: {createdLink.is_password_protected ? 'Password Protected' : 'Public Token'}</span>
             <a
               href={`/share/${createdLink.token}`}
@@ -175,6 +224,39 @@
           </div>
         </div>
       {:else}
+        <!-- Notice if an existing link was found for this target -->
+        {#if existingLink}
+          <div class="p-3 rounded border border-border bg-muted/40 flex items-center justify-between gap-2.5">
+            <div class="space-y-0.5 min-w-0">
+              <span class="font-medium text-foreground text-xs block truncate">
+                Active link exists: {existingLink.title}
+              </span>
+              <span class="text-[10px] text-muted-foreground font-mono truncate block">
+                {getShareUrl(existingLink.token)}
+              </span>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onclick={() => { selectedQrLink = existingLink; isQrOpen = true; }}
+                class="flex items-center gap-1 h-7 px-2.5 rounded border border-border bg-background hover:bg-muted text-foreground transition-colors text-[11px] font-medium"
+                title="Create printable QR code"
+              >
+                <QrCode size={12} class="text-primary" />
+                <span>Print QR</span>
+              </button>
+              <button
+                type="button"
+                onclick={() => copyUrl(existingLink!.token)}
+                class="flex items-center gap-1 h-7 px-2.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-[11px] font-medium"
+              >
+                <Copy size={12} />
+                <span>Copy</span>
+              </button>
+            </div>
+          </div>
+        {/if}
+
         <!-- Form to Configure Link -->
         <form onsubmit={handleCreate} class="space-y-3.5">
           <div class="space-y-1">
@@ -266,4 +348,17 @@
       {/if}
     </div>
   </div>
+{/if}
+
+{#if isQrOpen && (createdLink || selectedQrLink)}
+  {@const activeLink = createdLink || selectedQrLink}
+  <PrintableQrModal
+    isOpen={isQrOpen}
+    url={getShareUrl(activeLink!.token)}
+    initialTitle={activeLink!.title || title || 'Photo Gallery'}
+    initialSubtitle="Scan with your phone to view and download full-resolution photographs."
+    studioName={auth.activeWorkspace?.name || 'LensVault Photography'}
+    hasPassword={activeLink!.is_password_protected}
+    onClose={() => isQrOpen = false}
+  />
 {/if}
