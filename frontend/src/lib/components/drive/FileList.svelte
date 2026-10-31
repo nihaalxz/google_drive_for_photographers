@@ -53,7 +53,8 @@
 </script>
 
 <div class="w-full border border-border rounded overflow-hidden bg-card text-xs">
-  <table class="w-full text-left border-collapse">
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse min-w-[360px]">
     <thead>
       <tr class="border-b border-border bg-muted/40 text-muted-foreground font-medium select-none">
         <th class="w-9 px-3 py-2.5">
@@ -145,7 +146,7 @@
               {:else}
                 <FileText size={15} class="text-muted-foreground shrink-0" />
               {/if}
-              <span class="font-medium text-foreground truncate max-w-xs">{file.safe_display_name}</span>
+              <span class="font-medium text-foreground truncate max-w-[120px] sm:max-w-xs">{file.safe_display_name}</span>
             </div>
           </td>
 
@@ -194,4 +195,5 @@
       {/each}
     </tbody>
   </table>
+  </div>
 </div>

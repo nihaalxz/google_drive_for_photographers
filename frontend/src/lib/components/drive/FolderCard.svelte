@@ -20,19 +20,19 @@
   tabindex="0"
   onclick={() => onOpen(folder)}
   onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(folder); } }}
-  class="group relative flex items-center justify-between p-3 rounded border border-border bg-card hover:bg-muted/40 transition-colors cursor-pointer select-none"
+  class="group relative flex items-center justify-between p-2.5 sm:p-3 rounded border border-border bg-card hover:bg-muted/40 transition-colors cursor-pointer select-none"
 >
-  <div class="flex items-center gap-3 min-w-0">
+  <div class="flex items-center gap-2 sm:gap-3 min-w-0">
     <div
-      class="w-8 h-8 rounded flex items-center justify-center shrink-0 border border-border/80"
+      class="w-7 h-7 sm:w-8 sm:h-8 rounded flex items-center justify-center shrink-0 border border-border/80"
       style={`background-color: ${folder.color ? folder.color + '15' : 'hsl(var(--muted))'}; color: ${folder.color || 'hsl(var(--foreground))'}`}
     >
-      <FolderIcon size={18} class="fill-current" />
+      <FolderIcon size={16} class="fill-current sm:size-[18px]" />
     </div>
 
     <div class="min-w-0 flex flex-col">
-      <span class="text-xs font-medium text-foreground truncate">{folder.name}</span>
-      <span class="text-[11px] text-muted-foreground truncate">
+      <span class="text-[11px] sm:text-xs font-medium text-foreground truncate">{folder.name}</span>
+      <span class="text-[10px] sm:text-[11px] text-muted-foreground truncate">
         {folder.files_count} {folder.files_count === 1 ? 'file' : 'files'}
         {#if folder.children_count > 0}
           · {folder.children_count} {folder.children_count === 1 ? 'folder' : 'folders'}
@@ -41,7 +41,7 @@
     </div>
   </div>
 
-  <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+  <div class="flex items-center gap-0.5 sm:gap-1 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
     <button
       type="button"
       onclick={(e) => { e.stopPropagation(); onToggleStar(folder); }}

@@ -110,7 +110,7 @@
     <div
       role="dialog"
       aria-modal="true"
-      class="relative w-full max-w-lg rounded-md border border-border bg-card p-5 shadow-xl text-card-foreground text-xs z-10 space-y-4 subtle-fade"
+      class="relative w-full max-w-lg rounded-md border border-border bg-card p-4 sm:p-5 shadow-xl text-card-foreground text-xs z-10 space-y-4 subtle-fade max-h-[90vh] overflow-y-auto"
     >
       <div class="flex items-center justify-between border-b border-border pb-3">
         <div class="flex items-center gap-2 font-semibold text-sm text-foreground">

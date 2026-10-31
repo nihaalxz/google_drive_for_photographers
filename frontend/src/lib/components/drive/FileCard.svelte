@@ -120,8 +120,8 @@
       onclick={(e) => { e.stopPropagation(); onSelect(file, e.shiftKey); }}
       class={`absolute top-2 left-2 w-5 h-5 rounded border transition-colors flex items-center justify-center
         ${isSelected
-          ? 'bg-foreground border-foreground text-background'
-          : 'bg-card/90 border-border text-transparent opacity-0 group-hover:opacity-100 hover:border-foreground'
+          ? 'bg-foreground border-foreground text-background opacity-100'
+          : 'bg-card/90 border-border text-transparent opacity-70 sm:opacity-0 sm:group-hover:opacity-100 hover:border-foreground'
         }
       `}
       aria-label="Select file"
@@ -134,7 +134,7 @@
       type="button"
       onclick={(e) => { e.stopPropagation(); onToggleStar(file); }}
       class={`absolute top-2 right-2 p-1 rounded bg-card/90 border border-border/80 transition-opacity
-        ${file.is_starred ? 'opacity-100 text-amber-500' : 'opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground'}
+        ${file.is_starred ? 'opacity-100 text-amber-500' : 'opacity-70 sm:opacity-0 sm:group-hover:opacity-100 text-muted-foreground hover:text-foreground'}
       `}
       title={file.is_starred ? 'Unstar' : 'Star'}
       aria-label="Star file"
@@ -144,8 +144,8 @@
 
     <!-- Camera EXIF Tag Pill (Photographer Centric) -->
     {#if file.camera_model || file.f_stop || file.focal_length}
-      <div class="absolute bottom-2 left-2 right-2 flex items-center gap-1 overflow-hidden pointer-events-none">
-        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/75 text-white/90 truncate max-w-full">
+      <div class="absolute bottom-1.5 left-1.5 right-1.5 sm:bottom-2 sm:left-2 sm:right-2 flex items-center gap-1 overflow-hidden pointer-events-none">
+        <span class="text-[9px] sm:text-[10px] font-mono px-1 sm:px-1.5 py-0.5 rounded bg-black/75 text-white/90 truncate max-w-full">
           {[file.camera_model, file.f_stop, file.shutter_speed, file.iso ? `ISO ${file.iso}` : ''].filter(Boolean).join(' · ')}
         </span>
       </div>
@@ -153,16 +153,16 @@
   </div>
 
   <!-- File Metadata Footer -->
-  <div class="p-2.5 flex items-start justify-between gap-2 border-t border-border/60">
+  <div class="p-2 sm:p-2.5 flex items-start justify-between gap-1.5 sm:gap-2 border-t border-border/60">
     <div class="min-w-0 flex-1 flex flex-col">
-      <span class="text-xs font-medium text-foreground truncate" title={file.safe_display_name}>
+      <span class="text-[11px] sm:text-xs font-medium text-foreground truncate" title={file.safe_display_name}>
         {file.safe_display_name}
       </span>
-      <div class="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
+      <div class="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-[11px] text-muted-foreground mt-0.5">
         <span>{formatBytes(file.file_size)}</span>
         {#if file.width && file.height}
-          <span>·</span>
-          <span>{file.width}×{file.height}</span>
+          <span class="hidden sm:inline">·</span>
+          <span class="hidden sm:inline">{file.width}×{file.height}</span>
         {/if}
       </div>
     </div>

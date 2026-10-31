@@ -58,7 +58,7 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="new-folder-title"
-      class="relative w-full max-w-md rounded-md border border-border bg-card p-5 shadow-lg text-card-foreground text-sm z-10 space-y-4 subtle-fade"
+      class="relative w-full max-w-md rounded-md border border-border bg-card p-4 sm:p-5 shadow-lg text-card-foreground text-sm z-10 space-y-4 subtle-fade max-h-[90vh] overflow-y-auto"
     >
       <div class="flex items-center justify-between border-b border-border pb-3">
         <div class="flex items-center gap-2 font-semibold text-foreground">

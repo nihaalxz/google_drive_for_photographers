@@ -25,7 +25,7 @@
     <p class="text-muted-foreground">Select your preferred color theme. Optimized for photographic color grading and studio environments.</p>
   </div>
 
-  <div class="p-6 rounded border border-border bg-card space-y-4 shadow-sm">
+  <div class="p-4 sm:p-6 rounded border border-border bg-card space-y-4 shadow-sm">
     <span class="font-medium text-foreground block">Color Theme</span>
 
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">

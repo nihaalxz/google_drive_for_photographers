@@ -103,21 +103,21 @@
 
 <TopToolbar />
 
-<div class="h-10 px-6 border-b border-border bg-card/40 flex items-center justify-between shrink-0">
-  <div class="flex items-center gap-2 text-xs font-medium text-foreground">
-    <Images size={15} />
-    <span>Client Delivery Albums & Proofing Collections</span>
+<div class="h-10 px-3 sm:px-6 border-b border-border bg-card/40 flex items-center justify-between shrink-0">
+  <div class="flex items-center gap-2 text-xs font-medium text-foreground truncate min-w-0">
+    <Images size={15} class="shrink-0" />
+    <span class="truncate">Client Albums & Proofing Collections</span>
   </div>
   <button
     onclick={() => isCreateOpen = true}
-    class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors shadow-sm"
+    class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors shadow-sm shrink-0"
   >
     <Plus size={13} />
     <span>New Album</span>
   </button>
 </div>
 
-<div class="flex-1 overflow-y-auto p-6">
+<div class="flex-1 overflow-y-auto p-3 sm:p-6">
   {#if loading}
     <div class="flex flex-col items-center justify-center py-24 text-xs text-muted-foreground gap-3">
       <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -125,7 +125,7 @@
     </div>
 
   {:else if albums.length === 0}
-    <div class="text-center py-20 border border-dashed border-border rounded text-xs text-muted-foreground space-y-3 max-w-sm mx-auto">
+    <div class="text-center py-20 border border-dashed border-border rounded text-xs text-muted-foreground space-y-3 max-w-sm mx-auto p-4">
       <p class="font-medium text-foreground">No albums created yet</p>
       <p>Curate client collections, assign cover photographs, and generate proofing links.</p>
       <button
@@ -138,7 +138,7 @@
     </div>
 
   {:else}
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+    <div class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
       {#each albums as album (album.id)}
         <div class="rounded border border-border bg-card overflow-hidden text-xs flex flex-col group hover:border-border/90 transition-all">
           <!-- Cover Image -->

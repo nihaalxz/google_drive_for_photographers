@@ -1,6 +1,7 @@
 <script lang="ts">
   import { auth } from '../../stores/auth';
   import { uploadManager, type UploadManagerState } from '../../services/uploadManager';
+  import { toggleMobileNav } from '../../stores/ui';
   import ThemeToggle from './ThemeToggle.svelte';
   import {
     Search,
@@ -9,7 +10,8 @@
     LayoutGrid,
     List,
     ArrowUpDown,
-    Check
+    Check,
+    Menu
   } from 'lucide-svelte';
 
   interface Props {
@@ -105,27 +107,40 @@
   </defs>
 </svg>
 
-<header class="h-14 border-b border-border bg-card px-4 pl-14 lg:px-4 flex items-center justify-between gap-2 sm:gap-3 sticky top-0 z-20">
-  <!-- Left: Search Box -->
-  <div class="flex-1 max-w-xs sm:max-w-md relative min-w-0">
-    <Search size={15} class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-    <input
-      type="search"
-      value={searchQuery}
-      oninput={handleSearchInput}
-      placeholder="Search photos, folders, EXIF..."
-      class="w-full h-8 pl-8 sm:pl-9 pr-3 text-xs rounded border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-      aria-label="Search files and folders"
-    />
+<header class="h-14 border-b border-border bg-card px-2.5 sm:px-4 flex items-center justify-between gap-1.5 sm:gap-3 sticky top-0 z-20 select-none">
+  <!-- Left: Hamburger Menu + Search Box -->
+  <div class="flex items-center gap-1.5 sm:gap-2.5 flex-1 min-w-0">
+    <button
+      type="button"
+      onclick={toggleMobileNav}
+      class="lg:hidden p-1.5 rounded border border-border bg-background hover:bg-muted text-foreground transition-colors shrink-0"
+      title="Open navigation menu"
+      aria-label="Open navigation menu"
+    >
+      <Menu size={18} />
+    </button>
+
+    <!-- Search Box -->
+    <div class="flex-1 max-w-[170px] xs:max-w-[220px] sm:max-w-xs md:max-w-md relative min-w-0">
+      <Search size={14} class="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+      <input
+        type="search"
+        value={searchQuery}
+        oninput={handleSearchInput}
+        placeholder="Search photos, folders..."
+        class="w-full h-8 pl-7 sm:pl-9 pr-2.5 sm:pr-3 text-xs rounded border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors truncate"
+        aria-label="Search files and folders"
+      />
+    </div>
   </div>
 
   <!-- Right: Actions & Tools -->
-  <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+  <div class="flex items-center gap-1 sm:gap-2 shrink-0">
     <!-- Upload Status Pill (if uploads active or in progress) -->
     {#if uploadState.items.length > 0}
       <button
         onclick={() => uploadManager.toggleOpen()}
-        class="flex items-center gap-2 h-8 px-2 rounded border border-border bg-background hover:bg-muted text-xs text-foreground transition-colors shrink-0"
+        class="flex items-center gap-1.5 h-8 px-1.5 sm:px-2 rounded border border-border bg-background hover:bg-muted text-xs text-foreground transition-colors shrink-0"
         title="View Upload Manager"
         aria-label="View upload progress"
       >
@@ -142,29 +157,27 @@
     <!-- New Folder Action -->
     <button
       onclick={() => onNewFolderClick && onNewFolderClick()}
-      class="inline-flex items-center gap-1.5 h-8 px-2 sm:px-2.5 rounded border border-border bg-background hover:bg-muted text-xs text-foreground transition-colors font-medium shrink-0"
+      class="inline-flex items-center justify-center h-8 w-8 sm:w-auto sm:px-2.5 rounded border border-border bg-background hover:bg-muted text-xs text-foreground transition-colors font-medium shrink-0"
       title="Create New Folder"
       aria-label="Create New Folder"
     >
       <FolderPlus size={15} />
-      <span class="hidden sm:inline">New Folder</span>
+      <span class="hidden md:inline">New Folder</span>
     </button>
 
     <!-- Upload Files Action -->
     <button
       onclick={triggerUpload}
-      class="inline-flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium transition-colors shadow-sm shrink-0"
+      class="inline-flex items-center justify-center gap-1.5 h-8 w-8 sm:w-auto sm:px-3 rounded bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium transition-colors shadow-xs shrink-0"
       title="Upload Photos & Media"
       aria-label="Upload Photos & Media"
     >
       <UploadCloud size={15} />
-      <span class="font-medium">Upload</span>
+      <span class="hidden sm:inline font-medium">Upload</span>
     </button>
 
-    <div class="h-4 w-px bg-border mx-0.5"></div>
-
     <!-- View Mode Switcher -->
-    <div class="inline-flex rounded border border-border p-0.5 bg-background shrink-0">
+    <div class="hidden xs:inline-flex rounded border border-border p-0.5 bg-background shrink-0">
       <button
         onclick={() => { viewMode = 'grid'; if (onViewModeChange) onViewModeChange('grid'); }}
         class={`p-1.5 rounded text-xs transition-colors ${viewMode === 'grid' ? 'bg-foreground text-background font-semibold shadow-xs' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}

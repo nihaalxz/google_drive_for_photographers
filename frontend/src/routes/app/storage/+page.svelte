@@ -94,21 +94,21 @@
 
 <TopToolbar />
 
-<div class="h-10 px-6 border-b border-border bg-card/40 flex items-center justify-between shrink-0">
-  <div class="flex items-center gap-2 text-xs font-medium text-foreground">
-    <Database size={15} />
-    <span>Studio Storage Accounting & Quota</span>
+<div class="h-10 px-3 sm:px-6 border-b border-border bg-card/40 flex items-center justify-between shrink-0">
+  <div class="flex items-center gap-2 text-xs font-medium text-foreground truncate min-w-0">
+    <Database size={15} class="shrink-0" />
+    <span class="truncate">Storage Accounting & Quota</span>
   </div>
   <button
     onclick={loadStorageMetrics}
-    class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+    class="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
   >
     <RefreshCw size={12} />
-    <span>Refresh Ledger</span>
+    <span class="hidden xs:inline">Refresh Ledger</span>
   </button>
 </div>
 
-<div class="flex-1 overflow-y-auto p-6 space-y-6 max-w-4xl">
+<div class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6 max-w-4xl">
   {#if loading}
     <div class="flex flex-col items-center justify-center py-24 text-xs text-muted-foreground gap-3">
       <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -117,17 +117,17 @@
 
   {:else if breakdown}
     <!-- Main Meter Card -->
-    <div class="p-6 rounded border border-border bg-card space-y-4">
+    <div class="p-4 sm:p-6 rounded border border-border bg-card space-y-4">
       <div class="flex items-center justify-between">
         <div class="space-y-1">
-          <h2 class="text-base font-semibold text-foreground">
+          <h2 class="text-sm sm:text-base font-semibold text-foreground">
             {formatBytes(breakdown.used_bytes)} used of {formatBytes(breakdown.total_limit_bytes)}
           </h2>
-          <p class="text-xs text-muted-foreground">
+          <p class="text-[11px] sm:text-xs text-muted-foreground">
             {formatBytes(breakdown.available_bytes)} remaining storage in this workspace
           </p>
         </div>
-        <span class="font-mono text-xl font-bold text-foreground">
+        <span class="font-mono text-lg sm:text-xl font-bold text-foreground">
           {breakdown.used_percent}%
         </span>
       </div>
@@ -141,21 +141,21 @@
       </div>
 
       <!-- Legend -->
-      <div class="flex flex-wrap items-center gap-6 pt-2 text-xs text-muted-foreground">
+      <div class="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-6 pt-2 text-xs text-muted-foreground">
         <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
-          <span>RAW Archives ({formatBytes(breakdown.breakdown.raw_bytes)})</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-indigo-500 shrink-0"></span>
+          <span>RAW ({formatBytes(breakdown.breakdown.raw_bytes)})</span>
         </div>
         <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
           <span>JPEG / WebP ({formatBytes(breakdown.breakdown.standard_images_bytes)})</span>
         </div>
         <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
           <span>Videos ({formatBytes(breakdown.breakdown.videos_bytes)})</span>
         </div>
         <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-zinc-500"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-zinc-500 shrink-0"></span>
           <span>Other ({formatBytes(breakdown.breakdown.other_bytes)})</span>
         </div>
       </div>

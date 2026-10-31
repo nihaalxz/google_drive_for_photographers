@@ -37,7 +37,7 @@
 </script>
 
 {#if uploadState.isOpen && uploadState.items.length > 0}
-  <div class="fixed bottom-4 right-4 z-50 w-full max-w-md rounded-md border border-border bg-card text-card-foreground shadow-xl overflow-hidden text-xs subtle-fade">
+  <div class="fixed bottom-16 inset-x-3 sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-96 max-w-md z-50 rounded-md border border-border bg-card text-card-foreground shadow-2xl overflow-hidden text-xs subtle-fade">
     <!-- Header -->
     <div class="p-3 border-b border-border bg-muted/40 flex items-center justify-between">
       <div class="flex items-center gap-2">

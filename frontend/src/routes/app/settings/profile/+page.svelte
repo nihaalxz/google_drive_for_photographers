@@ -49,7 +49,7 @@
     <p class="text-muted-foreground">Manage your public studio identification and metadata defaults.</p>
   </div>
 
-  <form onsubmit={handleSave} class="p-6 rounded border border-border bg-card space-y-4 shadow-sm">
+  <form onsubmit={handleSave} class="p-4 sm:p-6 rounded border border-border bg-card space-y-4 shadow-sm">
     <div class="space-y-1.5">
       <label for="prof-email" class="font-medium text-foreground block">Email Address (Account Owner)</label>
       <input

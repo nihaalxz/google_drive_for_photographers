@@ -25,8 +25,14 @@
 
   let { files, activeFileId = $bindable(null), onClose, onToggleStar, onDownload }: Props = $props();
 
-  let showInfoPanel = $state(true);
+  let showInfoPanel = $state(false);
   let zoomLevel = $state(1);
+
+  onMount(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      showInfoPanel = true;
+    }
+  });
 
   let currentIndex = $derived(
     files.findIndex(f => f.id === activeFileId)
@@ -77,17 +83,17 @@
     class="fixed inset-0 z-50 bg-black/95 flex flex-col select-none overflow-hidden text-white"
   >
     <!-- Top Bar -->
-    <header class="h-14 px-4 border-b border-white/10 flex items-center justify-between z-10 shrink-0 bg-black/50">
-      <div class="flex items-center gap-3 min-w-0">
-        <span class="text-xs font-medium text-white truncate max-w-sm">
+    <header class="h-14 px-2.5 sm:px-4 border-b border-white/10 flex items-center justify-between z-10 shrink-0 bg-black/50 gap-2">
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0 max-w-[150px] xs:max-w-xs sm:max-w-md">
+        <span class="text-xs font-medium text-white truncate">
           {activeFile.safe_display_name}
         </span>
-        <span class="text-[11px] text-white/50 font-mono">
-          ({currentIndex + 1} of {files.length})
+        <span class="text-[10px] sm:text-[11px] text-white/50 font-mono shrink-0">
+          ({currentIndex + 1}/{files.length})
         </span>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1 sm:gap-2 shrink-0">
         <button
           onclick={toggleZoom}
           class="p-2 rounded hover:bg-white/10 text-white/80 hover:text-white transition-colors"
@@ -225,6 +231,7 @@
           file={activeFile}
           onDownload={() => onDownload(activeFile)}
           onToggleStar={() => onToggleStar(activeFile)}
+          onClose={() => showInfoPanel = false}
         />
       {/if}
     </div>

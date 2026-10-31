@@ -4,6 +4,7 @@
   import { goto } from '$app/navigation';
   import Sidebar from '$lib/components/layout/Sidebar.svelte';
   import TopToolbar from '$lib/components/layout/TopToolbar.svelte';
+  import MobileBottomNav from '$lib/components/layout/MobileBottomNav.svelte';
 
   let { children }: { children: Snippet } = $props();
 
@@ -33,12 +34,18 @@
   </div>
 {:else if isAuthed}
   <div class="h-screen w-screen flex overflow-hidden bg-background">
-    <!-- Sidebar -->
+    <!-- Sidebar / Drawer -->
     <Sidebar />
 
     <!-- Main Content Viewport -->
-    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <div
+      class="flex-1 flex flex-col min-w-0 overflow-hidden relative lg:!pb-0"
+      style="padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));"
+    >
       {@render children()}
     </div>
+
+    <!-- Mobile Fixed Bottom Navigation -->
+    <MobileBottomNav />
   </div>
 {/if}

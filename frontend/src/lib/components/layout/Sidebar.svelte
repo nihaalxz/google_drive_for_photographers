@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { auth } from '../../stores/auth';
+  import { isMobileNavOpen, closeMobileNav } from '../../stores/ui';
   import {
     Aperture,
     HardDrive,
@@ -12,14 +13,17 @@
     Database,
     Settings,
     LogOut,
-    Menu,
     X,
     ChevronRight,
     UserCircle
   } from 'lucide-svelte';
 
   let isCollapsed = $state(false);
-  let isMobileOpen = $state(false);
+  let mobileOpen = $state(false);
+
+  isMobileNavOpen.subscribe(v => {
+    mobileOpen = v;
+  });
 
   let currentPath = $derived(page.url.pathname);
   let activeWs = $derived(auth.activeWorkspace);
@@ -52,44 +56,29 @@
   }
 </script>
 
-<!-- Mobile Menu Trigger -->
-<div class="lg:hidden fixed top-3 left-3 z-40">
-  <button
-    onclick={() => isMobileOpen = !isMobileOpen}
-    class="p-2 rounded border border-border bg-card text-foreground shadow-sm"
-    aria-label="Toggle navigation menu"
-  >
-    {#if isMobileOpen}
-      <X size={20} />
-    {:else}
-      <Menu size={20} />
-    {/if}
-  </button>
-</div>
-
 <!-- Mobile Drawer Backdrop -->
-{#if isMobileOpen}
+{#if mobileOpen}
   <button
-    onclick={() => isMobileOpen = false}
-    class="fixed inset-0 bg-black/60 z-30 lg:hidden"
+    onclick={() => closeMobileNav()}
+    class="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-xs transition-opacity"
     aria-label="Close navigation overlay"
   ></button>
 {/if}
 
 <!-- Sidebar Container -->
 <aside
-  class={`fixed lg:static top-0 left-0 bottom-0 z-40 h-full flex flex-col border-r border-border bg-card text-card-foreground transition-all duration-200 select-none
-    ${isMobileOpen ? 'translate-x-0 w-64 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
+  class={`fixed lg:static top-0 left-0 bottom-0 z-50 h-full flex flex-col border-r border-border bg-card text-card-foreground transition-all duration-200 select-none
+    ${mobileOpen ? 'translate-x-0 w-72 max-w-[85vw] shadow-2xl' : '-translate-x-full lg:translate-x-0'}
     ${isCollapsed ? 'lg:w-16' : 'lg:w-64'}
   `}
 >
   <!-- Brand Header -->
   <div class="h-14 border-b border-border flex items-center justify-between px-4">
-    <a href="/app" class="flex items-center gap-2.5 overflow-hidden">
-      <div class="w-8 h-8 rounded bg-foreground text-background flex items-center justify-center shrink-0">
+    <a href="/app" onclick={() => closeMobileNav()} class="flex items-center gap-2.5 overflow-hidden">
+      <div class="w-8 h-8 rounded bg-foreground text-background flex items-center justify-center shrink-0 shadow-xs">
         <Aperture size={20} class="stroke-[2.2]" />
       </div>
-      {#if !isCollapsed}
+      {#if !isCollapsed || mobileOpen}
         <div class="flex flex-col min-w-0">
           <span class="font-semibold text-sm tracking-tight text-foreground leading-none">LensVault</span>
           <span class="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">
@@ -98,6 +87,16 @@
         </div>
       {/if}
     </a>
+
+    <!-- Close Drawer on Mobile -->
+    <button
+      onclick={() => closeMobileNav()}
+      class="lg:hidden p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+      title="Close menu"
+      aria-label="Close menu"
+    >
+      <X size={18} />
+    </button>
 
     <!-- Desktop Collapse Button -->
     <button
@@ -116,7 +115,7 @@
       {@const active = isActive(item.href)}
       <a
         href={item.href}
-        onclick={() => isMobileOpen = false}
+        onclick={() => closeMobileNav()}
         class={`group flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors relative
           ${active
             ? 'bg-muted text-foreground font-medium'
@@ -141,7 +140,7 @@
   </nav>
 
   <!-- Storage Meter Section -->
-  {#if !isCollapsed && activeWs}
+  {#if (!isCollapsed || mobileOpen) && activeWs}
     <div class="p-4 mx-2 mb-2 rounded border border-border bg-background/50 text-xs space-y-2">
       <div class="flex items-center justify-between text-muted-foreground font-medium">
         <span>Storage</span>
@@ -165,7 +164,7 @@
       <div class="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center shrink-0 text-muted-foreground">
         <UserCircle size={20} />
       </div>
-      {#if !isCollapsed}
+      {#if !isCollapsed || mobileOpen}
         <div class="min-w-0 flex flex-col">
           <span class="text-xs font-medium text-foreground truncate leading-tight">
             {currentUser?.full_name || currentUser?.username || 'Photographer'}

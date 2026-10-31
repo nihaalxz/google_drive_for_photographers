@@ -18,7 +18,7 @@
 
 <TopToolbar />
 
-<div class="h-10 px-6 border-b border-border bg-card/40 flex items-center gap-6 shrink-0 overflow-x-auto text-xs">
+<div class="h-10 px-3 sm:px-6 border-b border-border bg-card/40 flex items-center gap-3 sm:gap-6 shrink-0 overflow-x-auto text-xs no-scrollbar">
   {#each tabs as tab}
     {@const active = currentPath === tab.href}
     <a
@@ -35,6 +35,6 @@
   {/each}
 </div>
 
-<div class="flex-1 overflow-y-auto p-6 max-w-3xl">
+<div class="flex-1 overflow-y-auto p-3 sm:p-6 max-w-3xl">
   {@render children()}
 </div>

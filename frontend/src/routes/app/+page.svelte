@@ -300,15 +300,20 @@
 />
 
 <!-- Sub-header Breadcrumb Bar -->
-<div class="h-10 px-6 border-b border-border bg-card/40 flex items-center justify-between shrink-0">
-  <Breadcrumbs crumbs={breadcrumbs} onNavigate={handleFolderNavigate} />
-  <div class="text-[11px] text-muted-foreground font-mono">
+<div class="h-10 px-3 sm:px-6 border-b border-border bg-card/40 flex items-center justify-between gap-2 shrink-0 overflow-hidden">
+  <div class="min-w-0 flex-1 overflow-x-auto no-scrollbar">
+    <Breadcrumbs crumbs={breadcrumbs} onNavigate={handleFolderNavigate} />
+  </div>
+  <div class="text-[11px] text-muted-foreground font-mono shrink-0 whitespace-nowrap hidden xs:block">
     {folders.length} {folders.length === 1 ? 'folder' : 'folders'} · {files.length} {files.length === 1 ? 'file' : 'files'}
+  </div>
+  <div class="text-[11px] text-muted-foreground font-mono shrink-0 whitespace-nowrap xs:hidden">
+    {folders.length}f · {files.length}
   </div>
 </div>
 
 <!-- Main Drive Canvas -->
-<div class="flex-1 overflow-y-auto p-6 space-y-6">
+<div class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
   {#if loading}
     <div class="flex flex-col items-center justify-center py-24 text-xs text-muted-foreground gap-3">
       <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -317,7 +322,7 @@
 
   {:else if folders.length === 0 && files.length === 0}
     <!-- Empty Drive State -->
-    <div class="flex flex-col items-center justify-center py-20 border border-dashed border-border rounded-md p-8 text-center max-w-lg mx-auto space-y-4">
+    <div class="flex flex-col items-center justify-center py-16 sm:py-20 border border-dashed border-border rounded-md p-6 sm:p-8 text-center max-w-lg mx-auto space-y-4">
       <div class="w-12 h-12 rounded-full bg-muted border border-border flex items-center justify-center text-muted-foreground">
         <HardDrive size={24} />
       </div>
@@ -353,7 +358,7 @@
           Folders
         </h2>
         {#if viewMode === 'grid'}
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3">
             {#each sortedFolders as folder (folder.id)}
               <FolderCard
                 {folder}
@@ -429,7 +434,7 @@
         </div>
 
         {#if viewMode === 'grid'}
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-4">
             {#each files as file (file.id)}
               <FileCard
                 {file}

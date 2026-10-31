@@ -88,17 +88,17 @@
 
 <TopToolbar />
 
-<div class="h-10 px-6 border-b border-border bg-card/40 flex items-center justify-between shrink-0">
-  <div class="flex items-center gap-2 text-xs font-medium text-foreground">
-    <Trash2 size={15} />
-    <span>Trash & Deleted Assets</span>
+<div class="h-10 px-3 sm:px-6 border-b border-border bg-card/40 flex items-center justify-between shrink-0">
+  <div class="flex items-center gap-2 text-xs font-medium text-foreground truncate min-w-0">
+    <Trash2 size={15} class="shrink-0" />
+    <span class="truncate">Trash & Deleted Assets</span>
   </div>
-  <div class="text-[11px] text-muted-foreground font-mono">
-    {folders.length + files.length} deleted items
+  <div class="text-[11px] text-muted-foreground font-mono shrink-0">
+    {folders.length + files.length} items
   </div>
 </div>
 
-<div class="flex-1 overflow-y-auto p-6 space-y-6">
+<div class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
   {#if loading}
     <div class="flex flex-col items-center justify-center py-24 text-xs text-muted-foreground gap-3">
       <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -106,7 +106,7 @@
     </div>
 
   {:else if folders.length === 0 && files.length === 0}
-    <div class="text-center py-20 border border-dashed border-border rounded text-xs text-muted-foreground space-y-1">
+    <div class="text-center py-20 border border-dashed border-border rounded text-xs text-muted-foreground space-y-1 p-4">
       <p class="font-medium text-foreground">Trash is empty</p>
       <p>Items deleted from your drive or albums will appear here.</p>
     </div>
@@ -118,7 +118,8 @@
     </div>
 
     <div class="rounded border border-border bg-card overflow-hidden text-xs">
-      <table class="w-full text-left border-collapse">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[500px]">
         <thead>
           <tr class="border-b border-border bg-muted/40 text-muted-foreground font-medium select-none">
             <th class="px-4 py-3">Item Name</th>
@@ -196,6 +197,7 @@
           {/each}
         </tbody>
       </table>
+      </div>
     </div>
   {/if}
 </div>

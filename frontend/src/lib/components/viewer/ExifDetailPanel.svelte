@@ -7,7 +7,8 @@
     Maximize2,
     Sliders,
     Download,
-    Star
+    Star,
+    X
   } from 'lucide-svelte';
   import type { FileAsset } from '../../types';
 
@@ -15,9 +16,10 @@
     file: FileAsset;
     onDownload: () => void;
     onToggleStar: () => void;
+    onClose?: () => void;
   }
 
-  let { file, onDownload, onToggleStar }: Props = $props();
+  let { file, onDownload, onToggleStar, onClose }: Props = $props();
 
   function formatBytes(bytes: number): string {
     if (!bytes || bytes === 0) return '0 B';
@@ -44,21 +46,33 @@
   );
 </script>
 
-<div class="w-80 h-full border-l border-border bg-card p-4 overflow-y-auto flex flex-col gap-5 text-xs text-card-foreground select-none">
+<div class="fixed inset-x-0 bottom-0 max-h-[75vh] md:static md:w-80 md:h-full md:max-h-full border-t md:border-t-0 md:border-l border-border bg-card p-4 overflow-y-auto flex flex-col gap-4 sm:gap-5 text-xs text-card-foreground select-none z-30 shadow-2xl rounded-t-xl md:rounded-none">
   <!-- Header Title -->
   <div class="space-y-1">
     <div class="flex items-center justify-between">
       <span class="text-[10px] font-mono font-semibold uppercase tracking-wider text-muted-foreground">
         {file.file_extension} {file.is_raw ? 'RAW Master' : 'Asset'}
       </span>
-      <button
-        onclick={onToggleStar}
-        class={`p-1 rounded transition-colors ${file.is_starred ? 'text-amber-500' : 'text-muted-foreground hover:text-foreground'}`}
-        title={file.is_starred ? 'Unstar' : 'Star'}
-        aria-label="Star file"
-      >
-        <Star size={15} class={file.is_starred ? 'fill-amber-500' : ''} />
-      </button>
+      <div class="flex items-center gap-1">
+        <button
+          onclick={onToggleStar}
+          class={`p-1 rounded transition-colors ${file.is_starred ? 'text-amber-500' : 'text-muted-foreground hover:text-foreground'}`}
+          title={file.is_starred ? 'Unstar' : 'Star'}
+          aria-label="Star file"
+        >
+          <Star size={15} class={file.is_starred ? 'fill-amber-500' : ''} />
+        </button>
+        {#if onClose}
+          <button
+            onclick={onClose}
+            class="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors md:hidden"
+            title="Close panel"
+            aria-label="Close panel"
+          >
+            <X size={16} />
+          </button>
+        {/if}
+      </div>
     </div>
     <h3 class="text-sm font-semibold text-foreground break-words leading-snug">
       {file.safe_display_name}
