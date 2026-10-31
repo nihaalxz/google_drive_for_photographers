@@ -4,13 +4,14 @@
   import { toast } from '$lib/stores/toast';
   import { goto } from '$app/navigation';
   import ThemeToggle from '$lib/components/layout/ThemeToggle.svelte';
-  import { Aperture, ArrowRight, Lock, Mail, User, Building } from 'lucide-svelte';
+  import { Aperture, ArrowRight, Lock, Mail, User, Building, Eye, EyeOff } from 'lucide-svelte';
 
   let fullName = $state('');
   let workspaceName = $state('');
   let username = $state('');
   let email = $state('');
   let password = $state('');
+  let showPassword = $state(false);
   let isSubmitting = $state(false);
   let error = $state('');
 
@@ -113,16 +114,29 @@
       <div class="space-y-1.5">
         <label for="reg-pass" class="font-medium text-foreground block">Password (8+ chars)</label>
         <div class="relative">
-          <Lock size={15} class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Lock size={15} class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <input
             id="reg-pass"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             bind:value={password}
             required
             minlength="8"
             placeholder="••••••••"
-            class="w-full h-9 pl-9 pr-3 rounded border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            class="w-full h-9 pl-9 pr-10 rounded border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           />
+          <button
+            type="button"
+            onclick={() => showPassword = !showPassword}
+            class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+            title={showPassword ? 'Hide password' : 'Show password'}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+          >
+            {#if showPassword}
+              <EyeOff size={15} />
+            {:else}
+              <Eye size={15} />
+            {/if}
+          </button>
         </div>
       </div>
 
