@@ -112,6 +112,9 @@ if [ "$VENV_ACTIVATED" = true ]; then
     echo "Running database migrations..."
     python manage.py migrate --noinput
     
+    echo "Ensuring Backblaze B2 S3 CORS rules..."
+    python manage.py ensure_b2_cors || true
+
     echo "Generating compressed thumbnails for newly uploaded or un-cached images..."
     python manage.py generate_thumbnails || true
 

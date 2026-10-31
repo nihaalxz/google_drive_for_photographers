@@ -112,7 +112,6 @@
       preload="metadata"
       muted
       playsinline
-      crossorigin="anonymous"
       class={`${className} pointer-events-none`}
       onloadedmetadata={handleLoadedMetadata}
       onseeked={handleSeeked}

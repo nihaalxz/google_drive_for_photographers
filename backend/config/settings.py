@@ -31,6 +31,10 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
+# Reverse Proxy / SSL settings for cPanel / LiteSpeed / Passenger
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+
 AUTH_USER_MODEL = 'accounts.User'
 
 # Application definition

@@ -49,23 +49,22 @@ class FileAssetSerializer(serializers.ModelSerializer):
     def get_thumbnail_url(self, obj):
         if obj.upload_status != 'UPLOADED':
             return None
-        # If pre-computed compressed thumbnail exists in B2, return direct presigned URL
-        if obj.thumbnail_key:
-            url = b2_service.generate_presigned_get(obj.thumbnail_key, expires_in=7200)
-            return self._ensure_absolute_url(url)
-        # For images without thumbnail_key yet, route to thumbnail generator endpoint
-        if obj.is_image:
+        # Always route image thumbnails and existing video thumbnails through the proxy endpoint.
+        # This streams the cached WebP thumbnail (or on-the-fly generates it),
+        # ensuring 100% reliable rendering without 403 Forbidden or CORS issues.
+        if obj.is_image or (obj.is_video and obj.thumbnail_key):
             raw_url = f"/api/v1/files/{obj.id}/thumbnail/"
             return self._ensure_absolute_url(raw_url)
-        if obj.is_video and obj.thumbnail_key:
-            url = b2_service.generate_presigned_get(obj.thumbnail_key, expires_in=7200)
-            return self._ensure_absolute_url(url)
         return None
 
     def get_preview_url(self, obj):
         if obj.upload_status != 'UPLOADED':
             return None
-        # Return secure signed URL
+        # For images, route through preview endpoint for direct backend streaming
+        if obj.is_image:
+            raw_url = f"/api/v1/files/{obj.id}/preview/"
+            return self._ensure_absolute_url(raw_url)
+        # Return secure signed URL for video/other files
         url = b2_service.generate_presigned_get(obj.object_key, filename=None, expires_in=7200)
         return self._ensure_absolute_url(url)
 

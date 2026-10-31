@@ -168,7 +168,7 @@ class FileAssetViewSet(viewsets.ModelViewSet):
     def thumbnail(self, request, pk=None):
         """
         Fast compressed thumbnail endpoint.
-        Returns WebP image directly or redirects to presigned B2 URL.
+        Returns WebP image directly with long-lived client caching.
         Auto-generates and caches WebP in B2 if thumbnail_key was not yet computed.
         """
         try:
@@ -176,17 +176,16 @@ class FileAssetViewSet(viewsets.ModelViewSet):
         except (FileAsset.DoesNotExist, ValueError):
             return Response({'detail': 'File not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        def _secure_redirect(target_url: str):
-            if not target_url.startswith('http'):
-                target_url = request.build_absolute_uri(target_url)
-            if target_url.startswith('http://') and (not settings.DEBUG or request.is_secure() or request.META.get('HTTP_X_FORWARDED_PROTO') == 'https'):
-                target_url = 'https://' + target_url[7:]
-            return HttpResponseRedirect(target_url)
-
-        # 1. If pre-generated thumbnail_key exists in B2, redirect directly to presigned URL
+        # 1. If thumbnail_key exists in B2, fetch bytes and return directly
         if file_asset.thumbnail_key:
-            url = b2_service.generate_presigned_get(file_asset.thumbnail_key, expires_in=7200)
-            return _secure_redirect(url)
+            try:
+                thumb_bytes = b2_service.get_object_bytes(file_asset.thumbnail_key)
+                if thumb_bytes:
+                    response = HttpResponse(thumb_bytes, content_type='image/webp')
+                    response['Cache-Control'] = 'public, max-age=604800, immutable'
+                    return response
+            except Exception as e:
+                logger.warning(f"Error reading cached thumbnail {file_asset.thumbnail_key}: {e}")
 
         # 2. If it's an image, generate compressed WebP thumbnail on the fly
         if file_asset.is_image:
@@ -205,9 +204,39 @@ class FileAssetViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 logger.error(f"Error generating on-the-fly thumbnail for {file_asset.id}: {e}")
 
-        # 3. Fallback: redirect to preview_url
-        preview_url = b2_service.generate_presigned_get(file_asset.object_key, expires_in=7200)
-        return _secure_redirect(preview_url)
+        # 3. Fallback: stream original image bytes directly
+        try:
+            raw_bytes = b2_service.get_object_bytes(file_asset.object_key)
+            if raw_bytes:
+                content_type = file_asset.mime_type or 'image/jpeg'
+                response = HttpResponse(raw_bytes, content_type=content_type)
+                response['Cache-Control'] = 'public, max-age=86400'
+                return response
+        except Exception:
+            pass
+
+        return Response({'detail': 'Thumbnail not available'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
+    def preview(self, request, pk=None):
+        """
+        Direct preview streaming endpoint for images and media.
+        """
+        try:
+            file_asset = FileAsset.objects.get(id=pk, is_deleted=False)
+        except (FileAsset.DoesNotExist, ValueError):
+            return Response({'detail': 'File not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if file_asset.is_image:
+            raw_bytes = b2_service.get_object_bytes(file_asset.object_key)
+            if raw_bytes:
+                response = HttpResponse(raw_bytes, content_type=file_asset.mime_type or 'image/jpeg')
+                response['Cache-Control'] = 'public, max-age=86400'
+                return response
+
+        # For videos, redirect to presigned URL
+        url = b2_service.generate_presigned_get(file_asset.object_key, expires_in=7200)
+        return HttpResponseRedirect(url)
 
     @action(detail=False, methods=['post'])
     def bulk_action(self, request):

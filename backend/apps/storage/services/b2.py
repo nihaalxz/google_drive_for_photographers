@@ -26,8 +26,38 @@ class B2StorageService:
             region_name=self.region,
             aws_access_key_id=self.key_id,
             aws_secret_access_key=self.application_key,
-            config=Config(signature_version='s3v4')
+            config=Config(
+                signature_version='s3v4',
+                s3={'addressing_style': 'path'}
+            )
         )
+
+    def ensure_bucket_cors(self) -> bool:
+        """
+        Configure CORS rules on the B2 bucket so web browsers can directly upload,
+        preview, and stream media without 403 Forbidden errors.
+        """
+        if not self.has_credentials:
+            return False
+        try:
+            client = self._get_client()
+            cors_config = {
+                'CORSRules': [
+                    {
+                        'AllowedHeaders': ['*'],
+                        'AllowedMethods': ['GET', 'PUT', 'POST', 'HEAD'],
+                        'AllowedOrigins': ['*'],
+                        'ExposeHeaders': ['ETag', 'Content-Length', 'Content-Range', 'Accept-Ranges'],
+                        'MaxAgeSeconds': 86400
+                    }
+                ]
+            }
+            client.put_bucket_cors(Bucket=self.bucket_name, CORSConfiguration=cors_config)
+            logger.info(f"Successfully configured S3 CORS on bucket '{self.bucket_name}'")
+            return True
+        except Exception as e:
+            logger.warning(f"Could not automatically set bucket CORS: {e}")
+            return False
 
     def generate_presigned_put(self, object_key: str, mime_type: str, expires_in: int = 3600) -> str:
         """

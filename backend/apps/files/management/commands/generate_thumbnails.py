@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from apps.files.models import FileAsset
 from apps.storage.services.b2 import b2_service
 from apps.files.utils import generate_compressed_thumbnail
@@ -8,8 +9,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         images_missing_thumbs = FileAsset.objects.filter(
+            Q(thumbnail_key__isnull=True) | Q(thumbnail_key=''),
             upload_status='UPLOADED',
-            thumbnail_key='',
             mime_type__startswith='image/'
         )
         total = images_missing_thumbs.count()
