@@ -383,13 +383,33 @@ export const api = {
   }
 };
 
-export function getAssetThumbnailUrl(file: FileAsset | null | undefined): string | null {
-  if (!file) return null;
-  const raw = file.thumbnail_url || file.preview_url;
+export function resolveAssetUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  let raw = url.trim();
   if (!raw) return null;
+
+  // If the browser is on https: and URL is http:, upgrade to https: to avoid Mixed Content block
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && raw.startsWith('http://')) {
+    raw = 'https://' + raw.slice(7);
+  }
+
+  // If it's already an absolute or data URL, return it
   if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('data:')) {
     return raw;
   }
-  return `${API_BASE_URL}${raw}`;
+
+  // Prepend API_BASE_URL for relative paths
+  const cleanPath = raw.startsWith('/') ? raw : `/${raw}`;
+  return `${API_BASE_URL}${cleanPath}`;
+}
+
+export function getAssetThumbnailUrl(file: FileAsset | null | undefined): string | null {
+  if (!file) return null;
+  return resolveAssetUrl(file.thumbnail_url || file.preview_url);
+}
+
+export function getAssetPreviewUrl(file: FileAsset | null | undefined): string | null {
+  if (!file) return null;
+  return resolveAssetUrl(file.preview_url || file.thumbnail_url);
 }
 

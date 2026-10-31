@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { api } from '../../services/api';
+  import { api, getAssetThumbnailUrl, getAssetPreviewUrl } from '../../services/api';
   import { auth } from '../../stores/auth';
   import { toast } from '../../stores/toast';
   import {
@@ -227,12 +227,24 @@
                 >
                   <div class="flex items-center gap-2.5 min-w-0">
                     <div class="w-9 h-9 rounded bg-muted/60 overflow-hidden flex items-center justify-center shrink-0 border border-border/80">
-                      {#if album.cover_asset && (album.cover_asset.thumbnail_url || album.cover_asset.preview_url)}
-                        <img
-                          src={album.cover_asset.thumbnail_url || album.cover_asset.preview_url}
-                          alt=""
-                          class="w-full h-full object-cover"
-                        />
+                      {#if album.cover_asset}
+                        {@const cThumb = getAssetThumbnailUrl(album.cover_asset)}
+                        {@const cPrev = getAssetPreviewUrl(album.cover_asset)}
+                        {#if cThumb}
+                          <img
+                            src={cThumb}
+                            alt=""
+                            class="w-full h-full object-cover"
+                            onerror={(e) => {
+                              const target = e.currentTarget;
+                              if (cPrev && target.src !== cPrev) {
+                                target.src = cPrev;
+                              }
+                            }}
+                          />
+                        {:else}
+                          <Camera size={16} class="text-muted-foreground" />
+                        {/if}
                       {:else}
                         <Camera size={16} class="text-muted-foreground" />
                       {/if}

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { page } from '$app/state';
-  import { api } from '$lib/services/api';
+  import { api, getAssetThumbnailUrl, getAssetPreviewUrl } from '$lib/services/api';
   import { toast } from '$lib/stores/toast';
   import ThemeToggle from '$lib/components/layout/ThemeToggle.svelte';
   import ImageViewerModal from '$lib/components/viewer/ImageViewerModal.svelte';
@@ -244,28 +244,58 @@
                 onkeydown={(e) => { if (e.key === 'Enter') previewFileId = file.id; }}
                 class="group relative rounded border border-border bg-card overflow-hidden cursor-pointer select-none aspect-[4/3]"
               >
-                {#if file.is_image && (file.thumbnail_url || file.preview_url)}
-                  <img
-                    src={file.thumbnail_url || file.preview_url}
-                    alt={file.safe_display_name}
-                    loading="lazy"
-                    decoding="async"
-                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                {:else if file.is_video && file.thumbnail_url}
-                  <img
-                    src={file.thumbnail_url}
-                    alt={file.safe_display_name}
-                    loading="lazy"
-                    decoding="async"
-                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                {:else if file.is_video && file.preview_url}
-                  <VideoThumbnail
-                    src={file.preview_url}
-                    alt={file.safe_display_name}
-                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
+                {#if file.is_image}
+                  {@const thumb = getAssetThumbnailUrl(file)}
+                  {@const prev = getAssetPreviewUrl(file)}
+                  {#if thumb}
+                    <img
+                      src={thumb}
+                      alt={file.safe_display_name}
+                      loading="lazy"
+                      decoding="async"
+                      onerror={(e) => {
+                        const target = e.currentTarget;
+                        if (prev && target.src !== prev) {
+                          target.src = prev;
+                        }
+                      }}
+                      class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  {:else}
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground">
+                      <Camera size={24} />
+                      <span class="text-[10px] uppercase font-mono mt-1">{file.file_extension}</span>
+                    </div>
+                  {/if}
+                {:else if file.is_video}
+                  {@const vThumb = getAssetThumbnailUrl(file)}
+                  {@const vPrev = getAssetPreviewUrl(file)}
+                  {#if vThumb}
+                    <img
+                      src={vThumb}
+                      alt={file.safe_display_name}
+                      loading="lazy"
+                      decoding="async"
+                      onerror={(e) => {
+                        const target = e.currentTarget;
+                        if (vPrev && target.src !== vPrev) {
+                          target.src = vPrev;
+                        }
+                      }}
+                      class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  {:else if vPrev}
+                    <VideoThumbnail
+                      src={vPrev}
+                      alt={file.safe_display_name}
+                      class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  {:else}
+                    <div class="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground">
+                      <Camera size={24} />
+                      <span class="text-[10px] uppercase font-mono mt-1">{file.file_extension}</span>
+                    </div>
+                  {/if}
                 {:else}
                   <div class="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground">
                     <Camera size={24} />

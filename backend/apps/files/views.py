@@ -176,10 +176,17 @@ class FileAssetViewSet(viewsets.ModelViewSet):
         except (FileAsset.DoesNotExist, ValueError):
             return Response({'detail': 'File not found'}, status=status.HTTP_404_NOT_FOUND)
 
+        def _secure_redirect(target_url: str):
+            if not target_url.startswith('http'):
+                target_url = request.build_absolute_uri(target_url)
+            if target_url.startswith('http://') and (not settings.DEBUG or request.is_secure() or request.META.get('HTTP_X_FORWARDED_PROTO') == 'https'):
+                target_url = 'https://' + target_url[7:]
+            return HttpResponseRedirect(target_url)
+
         # 1. If pre-generated thumbnail_key exists in B2, redirect directly to presigned URL
         if file_asset.thumbnail_key:
             url = b2_service.generate_presigned_get(file_asset.thumbnail_key, expires_in=7200)
-            return HttpResponseRedirect(url)
+            return _secure_redirect(url)
 
         # 2. If it's an image, generate compressed WebP thumbnail on the fly
         if file_asset.is_image:
@@ -200,7 +207,7 @@ class FileAssetViewSet(viewsets.ModelViewSet):
 
         # 3. Fallback: redirect to preview_url
         preview_url = b2_service.generate_presigned_get(file_asset.object_key, expires_in=7200)
-        return HttpResponseRedirect(preview_url)
+        return _secure_redirect(preview_url)
 
     @action(detail=False, methods=['post'])
     def bulk_action(self, request):

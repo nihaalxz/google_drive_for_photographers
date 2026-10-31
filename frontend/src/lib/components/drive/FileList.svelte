@@ -11,6 +11,7 @@
     Check
   } from 'lucide-svelte';
   import type { FileAsset } from '../../types';
+  import { getAssetThumbnailUrl, getAssetPreviewUrl } from '../../services/api';
   import VideoThumbnail from './VideoThumbnail.svelte';
 
   interface Props {
@@ -127,22 +128,54 @@
           <!-- Name & Icon / Mini Thumbnail -->
           <td class="px-3 py-2.5">
             <div class="flex items-center gap-2.5 min-w-0">
-              {#if file.is_image && (file.thumbnail_url || file.preview_url)}
-                <div class="w-7 h-7 rounded border border-border/80 bg-muted/40 overflow-hidden shrink-0">
-                  <img src={file.thumbnail_url || file.preview_url} alt="" class="w-full h-full object-cover" loading="lazy" decoding="async" />
-                </div>
-              {:else if file.is_video && file.thumbnail_url}
-                <div class="w-7 h-7 rounded border border-border/80 bg-muted/40 overflow-hidden shrink-0">
-                  <img src={file.thumbnail_url} alt="" class="w-full h-full object-cover" loading="lazy" decoding="async" />
-                </div>
-              {:else if file.is_video && file.preview_url}
-                <div class="w-7 h-7 rounded border border-border/80 bg-muted/40 overflow-hidden shrink-0">
-                  <VideoThumbnail src={file.preview_url} showBadge={false} showPlayOverlay={false} class="w-full h-full object-cover" />
-                </div>
-              {:else if file.is_image}
-                <Camera size={15} class="text-muted-foreground shrink-0" />
+              {#if file.is_image}
+                {@const thumb = getAssetThumbnailUrl(file)}
+                {@const prev = getAssetPreviewUrl(file)}
+                {#if thumb}
+                  <div class="w-7 h-7 rounded border border-border/80 bg-muted/40 overflow-hidden shrink-0">
+                    <img
+                      src={thumb}
+                      alt=""
+                      class="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                      onerror={(e) => {
+                        const target = e.currentTarget;
+                        if (prev && target.src !== prev) {
+                          target.src = prev;
+                        }
+                      }}
+                    />
+                  </div>
+                {:else}
+                  <Camera size={15} class="text-muted-foreground shrink-0" />
+                {/if}
               {:else if file.is_video}
-                <Film size={15} class="text-muted-foreground shrink-0" />
+                {@const vThumb = getAssetThumbnailUrl(file)}
+                {@const vPrev = getAssetPreviewUrl(file)}
+                {#if vThumb}
+                  <div class="w-7 h-7 rounded border border-border/80 bg-muted/40 overflow-hidden shrink-0">
+                    <img
+                      src={vThumb}
+                      alt=""
+                      class="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                      onerror={(e) => {
+                        const target = e.currentTarget;
+                        if (vPrev && target.src !== vPrev) {
+                          target.src = vPrev;
+                        }
+                      }}
+                    />
+                  </div>
+                {:else if vPrev}
+                  <div class="w-7 h-7 rounded border border-border/80 bg-muted/40 overflow-hidden shrink-0">
+                    <VideoThumbnail src={vPrev} showBadge={false} showPlayOverlay={false} class="w-full h-full object-cover" />
+                  </div>
+                {:else}
+                  <Film size={15} class="text-muted-foreground shrink-0" />
+                {/if}
               {:else}
                 <FileText size={15} class="text-muted-foreground shrink-0" />
               {/if}

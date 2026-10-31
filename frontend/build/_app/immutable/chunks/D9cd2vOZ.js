@@ -1,0 +1,1 @@
+import{M as e,Q as t,j as n,r,t as i,x as a}from"./U49mtlYK.js";import{t as o}from"./DndcV4is.js";function s(s,c){let l=i(c,[`children`,`$$slots`,`$$events`,`$$legacy`]),u=[[`path`,{d:`M20 6 9 17l-5-5`}]];o(s,r({name:`check`},()=>l,{get iconNode(){return u},children:(r,i)=>{var o=e(),s=t(o);a(s,c,`default`,{},null),n(r,o)},$$slots:{default:!0}}))}export{s as t};

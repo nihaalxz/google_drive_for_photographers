@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { api } from '../../services/api';
+  import { api, getAssetThumbnailUrl, getAssetPreviewUrl } from '../../services/api';
   import { auth } from '../../stores/auth';
   import { toast } from '../../stores/toast';
   import { uploadManager } from '../../services/uploadManager';
@@ -279,30 +279,50 @@
                 }`}
               >
                 <!-- Thumbnail -->
-                {#if file.is_image && (file.thumbnail_url || file.preview_url)}
-                  <img
-                    src={file.thumbnail_url || file.preview_url}
-                    alt={file.safe_display_name}
-                    class="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                {:else if file.is_video && file.thumbnail_url}
-                  <img
-                    src={file.thumbnail_url}
-                    alt={file.safe_display_name}
-                    class="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                {:else if file.is_video && file.preview_url}
-                  <VideoThumbnail src={file.preview_url} showBadge={false} showPlayOverlay={false} class="w-full h-full object-cover" />
-                {:else if file.is_image}
-                  <div class="w-full h-full flex items-center justify-center text-muted-foreground">
-                    <Camera size={24} />
-                  </div>
+                {#if file.is_image}
+                  {@const thumb = getAssetThumbnailUrl(file)}
+                  {@const prev = getAssetPreviewUrl(file)}
+                  {#if thumb}
+                    <img
+                      src={thumb}
+                      alt={file.safe_display_name}
+                      class="w-full h-full object-cover"
+                      loading="lazy"
+                      onerror={(e) => {
+                        const target = e.currentTarget;
+                        if (prev && target.src !== prev) {
+                          target.src = prev;
+                        }
+                      }}
+                    />
+                  {:else}
+                    <div class="w-full h-full flex items-center justify-center text-muted-foreground">
+                      <Camera size={24} />
+                    </div>
+                  {/if}
                 {:else if file.is_video}
-                  <div class="w-full h-full flex items-center justify-center text-muted-foreground">
-                    <Film size={24} />
-                  </div>
+                  {@const vThumb = getAssetThumbnailUrl(file)}
+                  {@const vPrev = getAssetPreviewUrl(file)}
+                  {#if vThumb}
+                    <img
+                      src={vThumb}
+                      alt={file.safe_display_name}
+                      class="w-full h-full object-cover"
+                      loading="lazy"
+                      onerror={(e) => {
+                        const target = e.currentTarget;
+                        if (vPrev && target.src !== vPrev) {
+                          target.src = vPrev;
+                        }
+                      }}
+                    />
+                  {:else if vPrev}
+                    <VideoThumbnail src={vPrev} showBadge={false} showPlayOverlay={false} class="w-full h-full object-cover" />
+                  {:else}
+                    <div class="w-full h-full flex items-center justify-center text-muted-foreground">
+                      <Film size={24} />
+                    </div>
+                  {/if}
                 {:else}
                   <div class="w-full h-full flex items-center justify-center text-muted-foreground">
                     <FileText size={24} />

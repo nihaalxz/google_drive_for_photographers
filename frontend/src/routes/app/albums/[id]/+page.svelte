@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import { api } from '$lib/services/api';
+  import { api, getAssetThumbnailUrl, getAssetPreviewUrl } from '$lib/services/api';
   import { auth } from '$lib/stores/auth';
   import { toast } from '$lib/stores/toast';
   import { uploadManager } from '$lib/services/uploadManager';
@@ -204,12 +204,24 @@
       <div class="flex items-start sm:items-center gap-3.5 min-w-0">
         <!-- Cover Thumbnail -->
         <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-md bg-muted/60 overflow-hidden flex items-center justify-center shrink-0 border border-border">
-          {#if album.cover_asset && (album.cover_asset.thumbnail_url || album.cover_asset.preview_url)}
-            <img
-              src={album.cover_asset.thumbnail_url || album.cover_asset.preview_url}
-              alt=""
-              class="w-full h-full object-cover"
-            />
+          {#if album.cover_asset}
+            {@const coverThumb = getAssetThumbnailUrl(album.cover_asset)}
+            {@const coverPrev = getAssetPreviewUrl(album.cover_asset)}
+            {#if coverThumb}
+              <img
+                src={coverThumb}
+                alt=""
+                class="w-full h-full object-cover"
+                onerror={(e) => {
+                  const target = e.currentTarget;
+                  if (coverPrev && target.src !== coverPrev) {
+                    target.src = coverPrev;
+                  }
+                }}
+              />
+            {:else}
+              <Camera size={24} class="text-muted-foreground" />
+            {/if}
           {:else}
             <Camera size={24} class="text-muted-foreground" />
           {/if}
@@ -327,28 +339,48 @@
           >
             <!-- Media Preview -->
             <div class="aspect-square bg-muted/60 relative overflow-hidden flex items-center justify-center">
-              {#if f.is_image && (f.thumbnail_url || f.preview_url)}
-                <img
-                  src={f.thumbnail_url || f.preview_url}
-                  alt={f.safe_display_name}
-                  loading="lazy"
-                  decoding="async"
-                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              {:else if f.is_video && f.thumbnail_url}
-                <img
-                  src={f.thumbnail_url}
-                  alt={f.safe_display_name}
-                  loading="lazy"
-                  decoding="async"
-                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              {:else if f.is_video && f.preview_url}
-                <VideoThumbnail src={f.preview_url} showBadge={false} showPlayOverlay={false} class="w-full h-full object-cover" />
-              {:else if f.is_image}
-                <Camera size={28} class="text-muted-foreground" />
+              {#if f.is_image}
+                {@const itemThumb = getAssetThumbnailUrl(f)}
+                {@const itemPrev = getAssetPreviewUrl(f)}
+                {#if itemThumb}
+                  <img
+                    src={itemThumb}
+                    alt={f.safe_display_name}
+                    loading="lazy"
+                    decoding="async"
+                    onerror={(e) => {
+                      const target = e.currentTarget;
+                      if (itemPrev && target.src !== itemPrev) {
+                        target.src = itemPrev;
+                      }
+                    }}
+                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                {:else}
+                  <Camera size={28} class="text-muted-foreground" />
+                {/if}
               {:else if f.is_video}
-                <Film size={28} class="text-muted-foreground" />
+                {@const vThumb = getAssetThumbnailUrl(f)}
+                {@const vPrev = getAssetPreviewUrl(f)}
+                {#if vThumb}
+                  <img
+                    src={vThumb}
+                    alt={f.safe_display_name}
+                    loading="lazy"
+                    decoding="async"
+                    onerror={(e) => {
+                      const target = e.currentTarget;
+                      if (vPrev && target.src !== vPrev) {
+                        target.src = vPrev;
+                      }
+                    }}
+                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                {:else if vPrev}
+                  <VideoThumbnail src={vPrev} showBadge={false} showPlayOverlay={false} class="w-full h-full object-cover" />
+                {:else}
+                  <Film size={28} class="text-muted-foreground" />
+                {/if}
               {:else}
                 <FileText size={28} class="text-muted-foreground" />
               {/if}

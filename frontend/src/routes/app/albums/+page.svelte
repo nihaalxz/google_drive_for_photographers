@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { api } from '$lib/services/api';
+  import { api, getAssetThumbnailUrl, getAssetPreviewUrl } from '$lib/services/api';
   import { auth } from '$lib/stores/auth';
   import { toast } from '$lib/stores/toast';
   import TopToolbar from '$lib/components/layout/TopToolbar.svelte';
@@ -148,14 +148,29 @@
           <a href={`/app/albums/${album.id}`} class="flex-1 flex flex-col">
             <!-- Cover Image -->
             <div class="aspect-[16/10] bg-muted/60 relative overflow-hidden flex items-center justify-center">
-              {#if album.cover_asset && (album.cover_asset.thumbnail_url || album.cover_asset.preview_url)}
-                <img
-                  src={album.cover_asset.thumbnail_url || album.cover_asset.preview_url}
-                  alt={album.title}
-                  loading="lazy"
-                  decoding="async"
-                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
+              {#if album.cover_asset}
+                {@const cThumb = getAssetThumbnailUrl(album.cover_asset)}
+                {@const cPrev = getAssetPreviewUrl(album.cover_asset)}
+                {#if cThumb}
+                  <img
+                    src={cThumb}
+                    alt={album.title}
+                    loading="lazy"
+                    decoding="async"
+                    onerror={(e) => {
+                      const target = e.currentTarget;
+                      if (cPrev && target.src !== cPrev) {
+                        target.src = cPrev;
+                      }
+                    }}
+                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                {:else}
+                  <div class="flex flex-col items-center justify-center text-muted-foreground gap-1.5">
+                    <Camera size={28} />
+                    <span class="text-[10px] uppercase font-mono">No Cover Photo</span>
+                  </div>
+                {/if}
               {:else}
                 <div class="flex flex-col items-center justify-center text-muted-foreground gap-1.5">
                   <Camera size={28} />

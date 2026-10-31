@@ -11,6 +11,7 @@
     Check
   } from 'lucide-svelte';
   import type { FileAsset } from '../../types';
+  import { getAssetThumbnailUrl, getAssetPreviewUrl } from '../../services/api';
   import VideoThumbnail from './VideoThumbnail.svelte';
 
   interface Props {
@@ -66,35 +67,65 @@
 >
   <!-- Thumbnail Container -->
   <div class="relative aspect-[4/3] w-full bg-muted/60 overflow-hidden flex items-center justify-center">
-    {#if file.is_image && (file.thumbnail_url || file.preview_url)}
-      <img
-        src={file.thumbnail_url || file.preview_url}
-        alt={file.safe_display_name}
-        loading="lazy"
-        decoding="async"
-        class="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
-      />
-    {:else if file.is_video && file.thumbnail_url}
-      <div class="relative w-full h-full">
+    {#if file.is_image}
+      {@const thumbUrl = getAssetThumbnailUrl(file)}
+      {@const previewUrl = getAssetPreviewUrl(file)}
+      {#if thumbUrl}
         <img
-          src={file.thumbnail_url}
+          src={thumbUrl}
           alt={file.safe_display_name}
           loading="lazy"
           decoding="async"
+          onerror={(e) => {
+            const target = e.currentTarget;
+            if (previewUrl && target.src !== previewUrl) {
+              target.src = previewUrl;
+            }
+          }}
           class="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
         />
-        <div class="absolute inset-0 flex items-center justify-center bg-black/20">
-          <div class="p-1.5 rounded-full bg-black/60 text-white backdrop-blur-sm">
-            <Film size={18} />
+      {:else}
+        <div class="flex flex-col items-center justify-center text-muted-foreground gap-1.5">
+          <Camera size={28} class="text-muted-foreground" />
+          <span class="text-[10px] uppercase font-mono">{file.file_extension}</span>
+        </div>
+      {/if}
+    {:else if file.is_video && (file.thumbnail_url || file.preview_url)}
+      {@const videoThumb = getAssetThumbnailUrl(file)}
+      {@const videoPreview = getAssetPreviewUrl(file)}
+      {#if file.thumbnail_url && videoThumb}
+        <div class="relative w-full h-full">
+          <img
+            src={videoThumb}
+            alt={file.safe_display_name}
+            loading="lazy"
+            decoding="async"
+            onerror={(e) => {
+              const target = e.currentTarget;
+              if (videoPreview && target.src !== videoPreview) {
+                target.src = videoPreview;
+              }
+            }}
+            class="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+          />
+          <div class="absolute inset-0 flex items-center justify-center bg-black/20">
+            <div class="p-1.5 rounded-full bg-black/60 text-white backdrop-blur-sm">
+              <Film size={18} />
+            </div>
           </div>
         </div>
-      </div>
-    {:else if file.is_video && file.preview_url}
-      <VideoThumbnail
-        src={file.preview_url}
-        alt={file.safe_display_name}
-        class="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
-      />
+      {:else if videoPreview}
+        <VideoThumbnail
+          src={videoPreview}
+          alt={file.safe_display_name}
+          class="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+        />
+      {:else}
+        <div class="flex flex-col items-center justify-center text-muted-foreground gap-1.5">
+          <Film size={28} />
+          <span class="text-[10px] uppercase font-semibold tracking-wider">Video</span>
+        </div>
+      {/if}
     {:else if file.is_video}
       <div class="flex flex-col items-center justify-center text-muted-foreground gap-1.5">
         <Film size={28} />
